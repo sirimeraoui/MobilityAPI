@@ -20,21 +20,14 @@ from resource.temporal_geom_seq.Create import post_tgsequence, add_movement_data
 from resource.temporal_prim_geom.Delete import delete_single_temporal_primitive_geo
 from resource.temporal_properties.Retrieve import get_tproperties, get_set_temporal_data
 from resource.temporal_properties.Create import post_tproperties
-
-
 from resource.temporal_property.Retrieve import get_temporal_property
 from resource.temporal_property.Delete import delete_temporal_property
 from resource.temporal_property.Create import post_temporal_property
-
 from resource.temporal_prim_value.Delete import delete_temporal_primitive_value
-
-
-
 pymeos_initialize()
 
 hostName = "localhost"
 serverPort = 8080
-
 host = 'localhost'
 port = 25431
 db = 'postgres'
@@ -44,7 +37,6 @@ password = 'mysecretpassword'
 connection = MobilityDB.connect(
     host=host, port=port, database=db, user=user, password=password)
 cursor = connection.cursor()
-
 
 class MyServer(BaseHTTPRequestHandler):
     # protocol_version = "HTTP/1.1"
@@ -80,29 +72,7 @@ class MyServer(BaseHTTPRequestHandler):
             path_only = urlparse(self.path).path
             collection_id = path_only.split('/')[-1]
             self.get_collection_id(collection_id, connection, cursor)
-
-
-    def get_tgsequence(self, connection, cursor):
-        get_tgsequence(self, connection, cursor)
-
-#____________________
-    def get_set_temporal_data(self, collectionId, featureId,connection, cursor):
-        get_set_temporal_data(self, collectionId, featureId,connection, cursor)
-
-    def get_temporal_property(self, collectionId, featureId, propertyName, connection, cursor):
-        get_temporal_property(self, collectionId, featureId, propertyName, connection, cursor)
-
-    def get_tproperties(self,connection, cursor):
-        get_tproperties(self,connection, cursor)
-#____________________
-
-
-    def post_tproperties(self, collectionId, featureId, connection, cursor):
-        post_tproperties(self, collectionId, featureId, connection, cursor)
-
-    def post_temporal_property(self, collectionId, featureId, propertyName, connection, cursor):
-        post_temporal_property(self, collectionId, featureId, propertyName, connection, cursor)
-    # POST requests router
+            # POST requests router
     def do_POST(self):
         if 'tgsequence' in self.path:
             self.post_tgsequence()
@@ -124,17 +94,6 @@ class MyServer(BaseHTTPRequestHandler):
             propertyName = parts[6]
 
             self.post_temporal_property(collectionId, featureId, propertyName, connection, cursor)
-
-#______________
-    def add_movement_data_in_mf(self, collectionId, featureId, connection, cursor):
-        add_movement_data_in_mf(self, collectionId, featureId, connection, cursor)
-
-    def post_tgsequence(self,connection, cursor):
-        post_tgsequence(self, connection, cursor)
-#______________
-
-    def delete_temporal_primitive_value(self, collectionId, featureId, propertyName, tValueId, connection, cursor):
-        delete_temporal_primitive_value(self, collectionId, featureId, propertyName, tValueId, connection, cursor)
     def do_DELETE(self):
         if 'tgsequence' in self.path:
             self.do_delete_sequence()
@@ -162,28 +121,11 @@ class MyServer(BaseHTTPRequestHandler):
             featureId = parts[4]
             propertyName = parts[6]
             self.delete_temporal_property(collectionId, featureId, propertyName, connection, cursor)
-
-
-
-
-
-
-#==========???????????
-    def do_delete_sequence(self):
-        components = self.path.split('/')
-        collection_id = components[2]
-        mfeature_id = components[4]
-        tGeometry_id = self.path.split('/')[6]
-        self.delete_single_temporal_primitive_geo(
-            collection_id, mfeature_id, tGeometry_id)
-#==========???????????
-    def delete_temporal_property(self, collectionId, featureId, propertyName, connection, cursor):
-        delete_temporal_property(self, collectionId, featureId, propertyName, connection, cursor)
-
     def do_PUT(self):
         if self.path.startswith('/collections/'):
             collection_id = self.path.split('/')[-1]
             self.put_collection(collection_id, connection, cursor)
+
 
     def do_home(self):
         self.send_response(200)
@@ -192,96 +134,45 @@ class MyServer(BaseHTTPRequestHandler):
         self.wfile.write(
             bytes("<html><head></head><p>Request: This is the base route of the pyApi</p>body></body></html>", "utf-8"))
 
-    # # OGC COMPLIANT
-    # # Get all collections
+
+# ________________________________Class Moving Feature Collection_______________________________
+## Resource Collections 
     def get_collections(self, connection, cursor):
         get_collections(self, connection, cursor)
 
-    # cleanup later
-
     def handle_error(self, code, message):
         handle_error(self, code, message)
-    # def get_collections(self):
-    #     try:
-    #         cursor.execute(
-    #             "SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE';"
-    #         )
-    #         fetched_collections = cursor.fetchall()
 
-    #         base_url = f"http://{hostName}:{serverPort}"
-
-    #         collections_list = []
-    #         for (table_name,) in fetched_collections:
-    #             collections_list.append({
-    #                 "id": table_name,
-    #                 "title": table_name,
-    #                 "links": [
-    #                     {
-    #                         "href": f"{base_url}/collections/{table_name}",
-    #                         "rel": "self",
-    #                         "type": "application/json"
-    #                     }
-    #                 ]
-    #             })
-
-    #         response = {
-    #             "collections": collections_list,
-    #             "links": [
-    #                 {"href": f"{base_url}/collections", "rel": "self", "type": "application/json"}
-    #             ]
-    #         }
-
-    #         json_data = json.dumps(response)
-    #         send_json_response(self, 200, json_data)
-
-    #     except Exception as e:
-    #         self.handle_error(500, f"Internal server error: {str(e)}")
 
     def post_collections(self, connection, cursor):
         post_collections(self, connection, cursor)
 
-    # def post_collections(self):
-    #     try:
-    #         content_length = int(self.headers['Content-Length'])  # <--- Gets the size of data
-    #         post_data = self.rfile.read(content_length)  # <--- Gets the data itself
-    #         print("POST request,\nPath: %s\nHeaders: %s\n\nBody: %s\n" % (
-    #             self.path, self.headers, post_data.decode('utf-8')))
+## Resource Collection 
 
-    #         data_dict = json.loads(post_data.decode('utf-8'))
-    #         title_lower = data_dict["title"].lower().replace(" ", "_")
-
-    #         cursor.execute(sql.SQL("DROP TABLE IF EXISTS public.{table}").format(table=sql.Identifier(title_lower)))
-    #         cursor.execute(sql.SQL(
-    #             "CREATE TABLE public.{table} (id SERIAL PRIMARY KEY, title TEXT, updateFrequency integer, description TEXT, itemType TEXT)").format(
-    #             table=sql.Identifier(title_lower)))
-    #         # cursor.execute("INSERT INTO public.moving_humans VALUES(DEFAULT, %s, %s, %s, %s)", (data_dict["title"], data_dict["updateFrequency"], data_dict["description"], data_dict["itemType"]))
-    #         connection.commit()
-
-    #         self.send_response(200)
-    #         self.send_header("Content-type", "application/json")
-    #         self.end_headers()
-    #         self.wfile.write(bytes(post_data.decode('utf-8'), "utf-8"))
-    #     except Exception as e:
-    #         self.handle_error(500, 'Internal server error')
-# ________________________________Resource Collection_______________________________
     def get_collection_id(self, collectionId, connection, cursor):
         get_collection_id(self, collectionId, connection, cursor)
+
+    def put_collection(self, collectionId, connection, cursor):
+        put_collection(self, collectionId, connection, cursor)
 
     def delete_collection(self, collectionId, connection, cursor):
         delete_collection(self, collectionId, connection, cursor)
 
-    def put_collection(self, collectionId, connection, cursor):
-        put_collection(self, collectionId, connection, cursor)
- # _____________________________________Moving features_____________________________________________________
+
+ # ____________________________________________________________Class Moving features_____________________________________________________
+
+ ## Resource Moving FeatureS
 
     def insert_feature(self, feature, collectionId, connection, cursor):
         insert_feature(self, feature, collectionId, connection, cursor)
 
-    def post_collection_items(self, collectionId, connection, cursor):
-        post_collection_items(self, collectionId, connection, cursor)
 
     def get_collection_items(self, collectionId, connection, cursor):
         get_collection_items(self, collectionId, connection, cursor)
+
+    def post_collection_items(self, collectionId, connection, cursor):
+        post_collection_items(self, collectionId, connection, cursor)
+
 
     def do_get_meta_data(self, collectionId, featureId):
         print("GET request,\nPath: %s\nHeaders: %s\n" %
@@ -308,68 +199,73 @@ class MyServer(BaseHTTPRequestHandler):
             self.handle_error(404 if "does not exist" in str(e) else 500,
                               "Collection or Feature does not exist" if "does not exist" in str(
                                   e) else str(e))
-
+## Resource Moving Feature (single)
+    #Get
     def get_movement_single_moving_feature(self, collectionId, featureId, connection, cursor):
         get_movement_single_moving_feature(self, collectionId, featureId, connection, cursor)
 
-    # def post_collection_items(self, collectionId):
-    #     try:
-    #         content_length = int(self.headers['Content-Length'])
-    #         post_data = self.rfile.read(content_length)
-    #         print("POST request,\nPath: %s\nHeaders: %s\n\nBody: %s\n" %
-    #             (self.path, self.headers, post_data.decode('utf-8')))
-
-    #         # list of features
-    #         features_list = json.loads(post_data.decode('utf-8'))
-    #         if not isinstance(features_list, list):
-    #             features_list = [features_list]  # wrap single feature into list
-
-    #         for feature in features_list:
-    #             feat_id = feature.get("id")
-    #             tempGeo = feature.get("temporalGeometry")
-
-    #             if tempGeo is None:
-    #                 print(f"Skipping feature {feat_id}: no temporalGeometry")
-    #                 continue  # skip invalid feature
-
-    #             try:
-    #                 # Validate and convert to TGeomPoint
-    #                 tGeomPoint = TGeomPoint.from_mfjson(json.dumps(tempGeo))
-
-    #                 # Insert into the collection
-    #                 sql_query = f"INSERT INTO public.{collectionId} VALUES({feat_id}, '{tGeomPoint}')"
-    #                 cursor.execute(sql_query)
-    #                 connection.commit()
-    #                 print(f"Successfully inserted feature {feat_id}")
-
-    #             except Exception as e:
-    #                 connection.rollback()
-    #                 print(f"Skipping feature {feat_id} due to error: {e}")
-
-    #         self.send_response(200)
-    #         self.send_header("Content-type", "application/json")
-    #         self.end_headers()
-    #         self.wfile.write(bytes(json.dumps({"status": "done"}), "utf-8"))
-
-    #     except Exception as e:
-    #         self.handle_error(400 if "DataError" in str(e) else 500, str(e))
-
-
-
-
+    #Delete
     def delete_single_moving_feature(self, collectionId, mfeature_id, connection, cursor):
         delete_single_moving_feature(self, collectionId, mfeature_id, connection, cursor)
 
 
+## Resource Temporal Geometry Sequence
+    #Get
+    def get_tgsequence(self, connection, cursor):
+        get_tgsequence(self, connection, cursor)
+    #Post:
 
+        #_#_____________
+    def add_movement_data_in_mf(self, collectionId, featureId, connection, cursor):
+        add_movement_data_in_mf(self, collectionId, featureId, connection, cursor)
+
+    def post_tgsequence(self,connection, cursor):
+        post_tgsequence(self, connection, cursor)
+        #_#____________
+## Resource Temporal Primitive Geomerty
+    #Delete
     def delete_single_temporal_primitive_geo(self, collectionId, featureId, tGeometryId, connection, cursor):
         delete_single_temporal_primitive_geo(self, collectionId, featureId, tGeometryId, connection, cursor)
 
+    #==========???????????
+    def do_delete_sequence(self):
+        components = self.path.split('/')
+        collection_id = components[2]
+        mfeature_id = components[4]
+        tGeometry_id = self.path.split('/')[6]
+        self.delete_single_temporal_primitive_geo(
+            collection_id, mfeature_id, tGeometry_id)
+    #==========???????????
+## Resource Temporal Properties
+    #Get:
+        #____________________
+    def get_set_temporal_data(self, collectionId, featureId,connection, cursor):
+        get_set_temporal_data(self, collectionId, featureId,connection, cursor)
 
 
+    def get_tproperties(self,connection, cursor):
+        get_tproperties(self,connection, cursor)
+        #____________________
 
+    #Post
+    def post_tproperties(self, collectionId, featureId, connection, cursor):
+        post_tproperties(self, collectionId, featureId, connection, cursor)
+## Resource Temporal Property
+    #Get
+    def get_temporal_property(self, collectionId, featureId, propertyName, connection, cursor):
+        get_temporal_property(self, collectionId, featureId, propertyName, connection, cursor)
+    #POst
+    def post_temporal_property(self, collectionId, featureId, propertyName, connection, cursor):
+        post_temporal_property(self, collectionId, featureId, propertyName, connection, cursor)
+    #Delete
 
+    def delete_temporal_property(self, collectionId, featureId, propertyName, connection, cursor):
+        delete_temporal_property(self, collectionId, featureId, propertyName, connection, cursor)
+## Resource Temporal Primitive Value
+    def delete_temporal_primitive_value(self, collectionId, featureId, propertyName, tValueId, connection, cursor):
+        delete_temporal_primitive_value(self, collectionId, featureId, propertyName, tValueId, connection, cursor)
 
+        
 
 if __name__ == "__main__":
     webServer = HTTPServer((hostName, serverPort), MyServer)
