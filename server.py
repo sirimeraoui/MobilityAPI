@@ -17,6 +17,7 @@ from resource.moving_feature.Retrieve import get_movement_single_moving_feature
 from resource.moving_feature.Delete import delete_single_moving_feature
 from resource.temporal_geom_seq.Retrieve import get_tgsequence
 from resource.temporal_geom_seq.Create import post_tgsequence, add_movement_data_in_mf
+from resource.temporal_prim_geom.Delete import delete_single_temporal_primitive_geo
 pymeos_initialize()
 
 hostName = "localhost"
@@ -109,7 +110,7 @@ class MyServer(BaseHTTPRequestHandler):
         collection_id = components[2]
         mfeature_id = components[4]
         tGeometry_id = self.path.split('/')[6]
-        self.do_delete_single_temporal_primitive_geo(
+        self.delete_single_temporal_primitive_geo(
             collection_id, mfeature_id, tGeometry_id)
 
     def do_PUT(self):
@@ -292,6 +293,10 @@ class MyServer(BaseHTTPRequestHandler):
     def delete_single_moving_feature(self, collectionId, mfeature_id, connection, cursor):
         delete_single_moving_feature(self, collectionId, mfeature_id, connection, cursor)
 
+
+
+    def delete_single_temporal_primitive_geo(self, collectionId, featureId, tGeometryId, connection, cursor):
+        delete_single_temporal_primitive_geo(self, collectionId, featureId, tGeometryId, connection, cursor)
 
     def do_delete_single_temporal_primitive_geo(self, collectionId, featureId, tGeometryId):
         columns = column_discovery(collectionId, cursor)
