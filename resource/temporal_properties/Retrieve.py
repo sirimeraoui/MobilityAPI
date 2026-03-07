@@ -32,6 +32,39 @@ def get_tproperties(self,connection, cursor):
             collection_id, feature_id, tpropertyname)
 
 
+def get_set_temporal_data(self, collectionId, featureId,connection, cursor):
+    columns = column_discovery2(collectionId, cursor)
+    id = columns[0][0]
+    trip = columns[1][0]
+
+    string = f"SELECT "
+
+    for i in range(2, len(columns)):
+        string += columns[i][0] + ","
+
+    string = string.rstrip(",")
+    string += f" FROM public.{collectionId} WHERE {id} = {featureId}"
+    cursor.execute(string)
+    rs = cursor.fetchall()
+
+    tab = []
+    for element in rs[0]:
+        mf_json = element.as_mfjson()
+
+        tab.append(json.loads(mf_json))
+    print(tab)
+    json_data = {
+        "temporalProperties": tab,
+        "timeStamp": "2021-09-01T12:00:00Z",
+        "numberMatched": 10,
+        "numberReturned": 2
+    }
+
+    send_json_response(self, 200, json.dumps(json_data))
+
+    return
+
+
 # def get_temporal_properties(self, collectionId, featureId, connection, cursor):
 
 #     columns = column_discovery2(collectionId, cursor)

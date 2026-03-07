@@ -18,13 +18,15 @@ from resource.moving_feature.Delete import delete_single_moving_feature
 from resource.temporal_geom_seq.Retrieve import get_tgsequence
 from resource.temporal_geom_seq.Create import post_tgsequence, add_movement_data_in_mf
 from resource.temporal_prim_geom.Delete import delete_single_temporal_primitive_geo
-from resource.temporal_properties.Retrieve import get_tproperties
+from resource.temporal_properties.Retrieve import get_tproperties, get_set_temporal_data
 from resource.temporal_properties.Create import post_tproperties
 
 
 from resource.temporal_property.Retrieve import get_temporal_property
 from resource.temporal_property.Delete import delete_temporal_property
 from resource.temporal_property.Create import post_temporal_property
+
+from resource.temporal_prim_value.Delete import delete_temporal_primitive_value
 
 
 
@@ -84,23 +86,16 @@ class MyServer(BaseHTTPRequestHandler):
         get_tgsequence(self, connection, cursor)
 
 #____________________
+    def get_set_temporal_data(self, collectionId, featureId,connection, cursor):
+        get_set_temporal_data(self, collectionId, featureId,connection, cursor)
+
     def get_temporal_property(self, collectionId, featureId, propertyName, connection, cursor):
         get_temporal_property(self, collectionId, featureId, propertyName, connection, cursor)
 
     def get_tproperties(self,connection, cursor):
         get_tproperties(self,connection, cursor)
 #____________________
-    def do_get_tproperties(self):
-        collection_id = self.path.split('/')[2]
-        feature_id = self.path.split('/')[4]
 
-        if self.path.endswith("/tproperties"):
-            self.do_get_set_temporal_data(collection_id, feature_id)
-        else:
-            tpropertyname = self.path.split('/')[6]
-            self.do_get_temporal_property(
-                collection_id, feature_id, tpropertyname)
-            
 
     def post_tproperties(self, collectionId, featureId, connection, cursor):
         post_tproperties(self, collectionId, featureId, connection, cursor)
@@ -138,6 +133,8 @@ class MyServer(BaseHTTPRequestHandler):
         post_tgsequence(self, connection, cursor)
 #______________
 
+    def delete_temporal_primitive_value(self, collectionId, featureId, propertyName, tValueId, connection, cursor):
+        delete_temporal_primitive_value(self, collectionId, featureId, propertyName, tValueId, connection, cursor)
     def do_DELETE(self):
         if 'tgsequence' in self.path:
             self.do_delete_sequence()
@@ -150,13 +147,28 @@ class MyServer(BaseHTTPRequestHandler):
             collection_id = components[2]
             mfeature_id = components[4]
             self.delete_single_moving_feature(collection_id, mfeature_id)
+        elif "/tproperties/" in self.path and len(self.path.split('/')) == 8:
+            #   delete /collections/{collectionId}/items/{mFeatureId}/tproperties/{tPropertyName}/{tValueId}
+            parts = self.path.split('/')
+            collectionId = parts[2]
+            featureId = parts[4]
+            propertyName = parts[6]
+            tValueId = parts[7]
+            self.delete_temporal_primitive_value(collectionId, featureId, propertyName, tValueId, connection, cursor)
         elif "/tproperties/" in self.path:
+            # DELETE temporal property
             parts = self.path.split('/')
             collectionId = parts[2]
             featureId = parts[4]
             propertyName = parts[6]
             self.delete_temporal_property(collectionId, featureId, propertyName, connection, cursor)
 
+
+
+
+
+
+#==========???????????
     def do_delete_sequence(self):
         components = self.path.split('/')
         collection_id = components[2]
@@ -164,7 +176,7 @@ class MyServer(BaseHTTPRequestHandler):
         tGeometry_id = self.path.split('/')[6]
         self.delete_single_temporal_primitive_geo(
             collection_id, mfeature_id, tGeometry_id)
-
+#==========???????????
     def delete_temporal_property(self, collectionId, featureId, propertyName, connection, cursor):
         delete_temporal_property(self, collectionId, featureId, propertyName, connection, cursor)
 
@@ -252,7 +264,7 @@ class MyServer(BaseHTTPRequestHandler):
     #     except Exception as e:
     #         self.handle_error(500, 'Internal server error')
 # ________________________________Resource Collection_______________________________
-    def get_collection_id(self, collectionId, connection, cusor):
+    def get_collection_id(self, collectionId, connection, cursor):
         get_collection_id(self, collectionId, connection, cursor)
 
     def delete_collection(self, collectionId, connection, cursor):
@@ -353,72 +365,8 @@ class MyServer(BaseHTTPRequestHandler):
     def delete_single_temporal_primitive_geo(self, collectionId, featureId, tGeometryId, connection, cursor):
         delete_single_temporal_primitive_geo(self, collectionId, featureId, tGeometryId, connection, cursor)
 
-    def do_delete_single_temporal_primitive_geo(self, collectionId, featureId, tGeometryId):
-        columns = column_discovery(collectionId, cursor)
-        id = columns[0][0]
-        trip = columns[1][0]
 
-        sql_select_trips = f"SELECT asMFJSON({trip}) FROM public.{collectionId} WHERE  {id}={featureId};"
-        cursor.execute(sql_select_trips)
-        connection.commit()
-        rs = cursor.fetchall()
-        print(tGeometryId)
 
-        data_dict = json.loads(rs[0][0])
-        to_change = data_dict.get("sequences")
-        if to_change:
-            to_change.pop(int(tGeometryId))
-        else:
-            to_change = data_dict.get("coordinates")
-            to_change.pop(int(tGeometryId))
-
-        print(to_change)
-
-        if (len(to_change) == 1):
-            data_dict["coordinates"] = to_change[0]
-        else:
-            data_dict["sequences"] = to_change
-
-        updated_json = json.dumps(data_dict)
-        tgeompoint = TGeomPoint.from_mfjson(updated_json)
-        sql_update = f"UPDATE public.{collectionId} SET {trip}= '{tgeompoint}' WHERE {id}={featureId}"
-        cursor.execute(sql_update)
-
-        self.send_response(200)
-        self.send_header("Content-type", "application/json")
-        self.end_headers()
-
-    def do_get_set_temporal_data(self, collectionId, featureId):
-        columns = column_discovery2(collectionId, cursor)
-        id = columns[0][0]
-        trip = columns[1][0]
-
-        string = f"SELECT "
-
-        for i in range(2, len(columns)):
-            string += columns[i][0] + ","
-
-        string = string.rstrip(",")
-        string += f" FROM public.{collectionId} WHERE {id} = {featureId}"
-        cursor.execute(string)
-        rs = cursor.fetchall()
-
-        tab = []
-        for element in rs[0]:
-            mf_json = element.as_mfjson()
-
-            tab.append(json.loads(mf_json))
-        print(tab)
-        json_data = {
-            "temporalProperties": tab,
-            "timeStamp": "2021-09-01T12:00:00Z",
-            "numberMatched": 10,
-            "numberReturned": 2
-        }
-
-        send_json_response(self, 200, json.dumps(json_data))
-
-        return
 
 
 
