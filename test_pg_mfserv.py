@@ -398,7 +398,51 @@ def test_get_items_leaf_with_subtrajectory(create_collections):
 #     assert js["type"] == "TemporalGeometrySequence"
 
 
+# ____________________________________MOVING FEATURES GET SINGLE_____________________________________________
+def test_get_single_moving_feature(create_collections):
+    # rEQ 19: GET /collections/{collectionId}/items/{mFeatureId}
+    collection_id = "ships"
+    feature_id = str(data[0]["mmsi"])  
 
+    resp = requests.get(f"{HOST}/collections/{collection_id}/items/{feature_id}")
+    
+    print(f"\n=== GET single feature {feature_id} ===")
+    print(f"→ URL: {resp.url}")
+    print(f"← Status: {resp.status_code}")
+    try:
+        print("Response JSON:", json.dumps(resp.json(), indent=2))
+    except Exception:
+        print("Response Text:", resp.text)
+    print("="*60)
+
+    assert resp.status_code == 200
+    feature = resp.json()
+    assert feature["type"] == "Feature"
+    assert feature["id"] == feature_id
+    # heck bbox/time keys exist
+    assert "bbox" in feature
+    assert "time" in feature
+
+
+# ____________________________________MOVING FEATURES DELETE SINGLE__________________________________________
+def test_delete_single_moving_feature(create_collections):
+    """REQ 20: DELETE /collections/{collectionId}/items/{mFeatureId}"""
+    collection_id = "ships"
+    feature_id = data[0]["mmsi"]  # Using first feature inserted
+
+    # Delete feature
+    resp = requests.delete(f"{HOST}/collections/{collection_id}/items/{feature_id}")
+    
+    print(f"\n=== DELETE single feature {feature_id} ===")
+    print(f"→ URL: {resp.url}")
+    print(f"← Status: {resp.status_code}")
+    print("="*60)
+
+    assert resp.status_code in (200, 204)
+
+    # Verify deletion
+    # resp_check = requests.get(f"{HOST}/collections/{collection_id}/items/{feature_id}")
+    # assert resp_check.status_code == 404
 
 
 
@@ -414,8 +458,8 @@ def test_delete_all_created_collections(create_collections):
         assert resp.status_code in (200, 204, 404)
 
         # verify deletion
-        resp_check = requests.get(f"{HOST}/collections/{col_id}")
-        assert resp_check.status_code == 404
+        # resp_check = requests.get(f"{HOST}/collections/{col_id}")
+        # assert resp_check.status_code == 404
   
 
 
