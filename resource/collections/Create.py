@@ -1,88 +1,83 @@
-# REQUIREMENT 2
-# /req/mf-collection/collections-post
+# REQ 2: /req/mf-collection/collections-post
+# REQ 4: /req/mf-collection/collections-post-success
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
-
-from utils import column_discovery, send_json_response, column_discovery2
-from pymeos.db.psycopg2 import MobilityDB
-from psycopg2 import sql
+from utils import send_json_response
+from resource.collection.collection_helper import (
+    validate_collection_data,
+    collection_exists,
+    insert_collection,
+    build_collection_response
+)
 import json
-from pymeos import pymeos_initialize, pymeos_finalize, TGeomPoint
-from urllib.parse import urlparse, parse_qs
 
-
-hostName = "localhost"
-serverPort = 8080
-
-host = 'localhost'
-port = 25431
-db = 'postgres'
-user = 'postgres'
-password = 'mysecretpassword'
-
-# 
-def post_collections(self,connection,cursor):
+def post_collections(self, connection, cursor):
     try:
-        content_length = int(self.headers['Content-Length'])  # <--- Gets the size of data
-        post_data = self.rfile.read(content_length)  # <--- Gets the data itself
-        # print("POST request,\nPath: %s\nHeaders: %s\n\nBody: %s\n" % (
-        #     self.path, self.headers, post_data.decode('utf-8')))
+        # Get and decode request body
+        content_length = int(self.headers['Content-Length'])
+        post_data = self.rfile.read(content_length)
         data_dict = json.loads(post_data.decode('utf-8'))
-    #     expected_types = {
-    #         "title": str,
-    #         "updateFrequency": int,
-    #         "description": str,
-    #         "itemType": str
-    #    }
-
-    #     # Check each field type
-    #     for expected_type in expected_types.items():
-    #         if not isinstance(data_dict[key], expected_type):
-    #             raise TypeError(f"Field '{key}' must be of type {expected_type.__name__}, "
-    #                             f"but got {type(data_dict[key]).__name__}")
-        if "itemType" not in data_dict or not data_dict["itemType"]:
-            data_dict["itemType"] = "movingfeature"
-        # print("All fields have correct types")
-        cursor.execute(sql.SQL("""
-                CREATE TABLE IF NOT EXISTS collections_metadata (
-                    id TEXT PRIMARY KEY,
-                    title TEXT,
-                    updateFrequency INTEGER,
-                    description TEXT,
-                    itemType TEXT) """))
-        connection.commit()
-        table_name = data_dict["title"].lower()
-        cursor.execute("SELECT id FROM collections_metadata WHERE id = %s", ( table_name.replace("'", "")  ,))
-            
-        exists = cursor.fetchone()
+        
+        #Attribute data validation, is_update is false for post operation
+        errors, validated_data = validate_collection_data(data_dict, is_update=False)
+        if errors:
+            self.handle_error(400, "; ".join(errors))
+            return
+        
+        collection_id = validated_data.pop("id") #for collection check and inserting if not exist
+        
+        #create collections table if it doesn't exist yet
+        #RECHECK==>ogc clean
         cursor.execute("""
-            SELECT EXISTS (
-                SELECT 1 
-                FROM information_schema.tables 
-                WHERE table_schema='public' AND table_name=%s
+            CREATE TABLE IF NOT EXISTS collections (
+                id TEXT PRIMARY KEY,
+                title TEXT NOT NULL,
+                description TEXT,
+                update_frequency INTEGER,
+                item_type TEXT DEFAULT 'movingfeature',
+                crs JSONB,
+                trs JSONB,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
             )
-        """, (table_name,))
-        table_exists = cursor.fetchone()[0]
-        exists = exists and table_exists
+        """)
+        connection.commit()
+        
+        # check if collection with same id already exists eg id = netherlands_ships (collection_helper.py)
+        if collection_exists(cursor, collection_id):
+            self.handle_error(409, f'Collection "{data_dict["title"]}" already exists.')
+            return
+        
+#       else new collection id :
+        insert_collection(cursor, collection_id, validated_data)
+        connection.commit()
+        
+        # __________________________start Build response:
+        base_url = f"http://{self.server.server_name}:{self.server.server_port}"
+        
+        # Reconstruct collection data for response 
+        
+        collection_data = {
+            "id": collection_id,
+            "title": validated_data.get("title"),
+            "description": validated_data.get("description"),
+            "item_type": validated_data.get("itemType", "movingfeature"),
+            "update_frequency": validated_data.get("updateFrequency"),
+            "crs": validated_data.get("crs"),
+            "trs": validated_data.get("trs")
+        }
+        #!!>  recheck code clean collection_data
+        response = build_collection_response(collection_data, base_url)
+        # __________________________end Build response
 
-        if(exists):
-            self.handle_error(409, f'Collection {data_dict["title"]} already exists.')
-            return   
-        else: 
-            cursor.execute("INSERT INTO  collections_metadata VALUES(%s, %s,%s,%s,%s)",(data_dict["title"].lower(),data_dict["title"].lower(), data_dict["updateFrequency"], data_dict["description"], data_dict["itemType"]))
-            cursor.execute(
-                sql.SQL("CREATE TABLE IF NOT EXISTS {} (id TEXT PRIMARY KEY)").format(
-                    sql.Identifier(table_name)
-                )
-            )
-
-            connection.commit()
-
-            # If the operation is not executed immediately, but is added to a processing queue, the response SHALL have an HTTP status code 202.
-            self.send_response(201)
-            self.send_header("Content-type", "application/json")
-            self.end_headers()
-            self.wfile.write(bytes(post_data.decode('utf-8'), "utf-8"))
+        # As per OGC, 201 new collection created successfully + endpoint to new collection
+        self.send_response(201)
+        self.send_header("Location", f"/collections/{collection_id}")
+        send_json_response(self, 201, response)
+        
+    except json.JSONDecodeError:
+        self.handle_error(400, "Invalid JSON- (check ogc specifications for more details)")
     except Exception as e:
-        print("message:", e)
-        self.handle_error(500, 'Internal server error')
+        connection.rollback()
+        print(f"Error in post_collections: {e}")
+        self.handle_error(500, f"Internal server error: {str(e)}")
