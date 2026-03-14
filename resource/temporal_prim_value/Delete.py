@@ -1,52 +1,61 @@
+# REQ 48: /req/movingfeatures/tpvalue-delete
+# REQ 49: /req/movingfeatures/tpvalue-delete-success
 
-#REQ 48
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from utils import send_json_response
+import traceback
 
-from utils import column_discovery, send_json_response, column_discovery2
-from pymeos.db.psycopg2 import MobilityDB
-from psycopg2 import sql
-import json
-from pymeos import pymeos_initialize, pymeos_finalize, TGeomPoint
-from urllib.parse import urlparse, parse_qs
-import math
-from datetime import datetime
-from resource.temporal_property.Retrieve import get_temporal_property
-hostName = "localhost"
-serverPort = 8080
+# DELETE /collecstions/{collectionId}/items/{featureId}/tproperties/{propertyName}/{valueId}
+def delete_temporal_primitive_value(self, collection_id, feature_id, property_name, value_id, connection, cursor):
 
-host = 'localhost'
-port = 25431
-db = 'postgres'
-user = 'postgres'
-password = 'mysecretpassword'
-
-
-
-def delete_temporal_primitive_value(self, collectionId, featureId, propertyName, tValueId, connection, cursor):
-    #get temp property
-    cursor.execute(f"SELECT {propertyName} FROM public.{collectionId} WHERE id={featureId}")
-    result = cursor.fetchone()
-    if not result:
-        self.handle_error(404, "Feature or property not found")
-        return
-
-    # load MF-JSON
-    prop_data = json.loads(result[0])
-
-    #del y value
-    values = prop_data.get("values", [])
-    for i, val in enumerate(values):
-        if val.get("id") == int(tValueId):
-            values.pop(i)
-            break
-    else:
-        self.handle_error(404, "TemporalPrimitiveValue not found")
-        return
-
-
-    updated_json = json.dumps(prop_data)
-    cursor.execute(f"UPDATE public.{collectionId} SET {propertyName} = '{updated_json}' WHERE id={featureId}")
-    connection.commit()
-
-    self.send_response(200)
-    self.end_headers()
+    try:
+        # collection exists
+        cursor.execute(
+            "SELECT id FROM collections WHERE id = %s",
+            (collection_id,)
+        )
+        if cursor.fetchone() is None:
+            self.handle_error(404, f"Collection '{collection_id}' not found")
+            return
+        
+        # feature exists
+        cursor.execute(
+            "SELECT id FROM moving_features WHERE id = %s AND collection_id = %s",
+            (feature_id, collection_id)
+        )
+        if cursor.fetchone() is None:
+            self.handle_error(404, f"Feature '{feature_id}' not found in collection '{collection_id}'")
+            return
+        
+        # Get property id:
+        cursor.execute("""
+            SELECT id FROM temporal_properties
+            WHERE feature_id = %s AND property_name = %s
+        """, (feature_id, property_name))
+        prop_row = cursor.fetchone()
+        if prop_row is None:
+            self.handle_error(404, f"Property '{property_name}' not found for feature '{feature_id}'")
+            return
+        property_id = prop_row[0]
+        
+        #DELETE FROM temporal_values for the property
+        cursor.execute("""
+            DELETE FROM temporal_values
+            WHERE id = %s AND property_id = %s
+            RETURNING id
+        """, (value_id, property_id))
+        
+        deleted = cursor.fetchone()
+        if not deleted:
+            self.handle_error(404, f"Value '{value_id}' not found for property '{property_name}'")
+            return
+        
+        connection.commit()
+        
+        #204 delete success
+        self.send_response(204)
+        self.end_headers()
+    except Exception as e:
+        connection.rollback()
+        # print(f"Error in delete TemporalPrimitiveValue: {e}")
+        # traceback.print_exc()
+        self.handle_error(500, f"Internal server error: {str(e)}")
