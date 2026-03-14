@@ -1,54 +1,67 @@
-
-#REQ 26
-from http.server import BaseHTTPRequestHandler, HTTPServer
-
-from utils import column_discovery, send_json_response, column_discovery2
-from pymeos.db.psycopg2 import MobilityDB
-from psycopg2 import sql
+# REQ 26: /req/movingfeatures/tgsequence-post
+# REQ 28: /req/movingfeatures/tgsequence-post-success
+from utils import send_json_response
+from pymeos import TGeomPoint
 import json
-from pymeos import pymeos_initialize, pymeos_finalize, TGeomPoint
-from urllib.parse import urlparse, parse_qs
-import math
-from datetime import datetime
 
-hostName = "localhost"
-serverPort = 8080
-
-host = 'localhost'
-port = 25431
-db = 'postgres'
-user = 'postgres'
-password = 'mysecretpassword'
-
-
+    # POST base/collections/{collectionId}/items/{featureId}/tgsequence
 def post_tgsequence(self, connection, cursor):
-    collection_id = self.path.split('/')[2]
-    feature_id = self.path.split('/')[4]
-    self.do_add_movement_data_in_mf(collection_id, feature_id)
-
-
-def add_movement_data_in_mf(self, collectionId, featureId, connection, cursor):
-        columns = column_discovery(collectionId, cursor)
-        id = columns[0][0]
-        trip = columns[1][0]
-
-        try:
-            print("POST request,\nPath: %s\nHeaders: %s\n" %
-                  (self.path, self.headers))
-            # <--- Gets the size of data
-            content_length = int(self.headers['Content-Length'])
-            post_data = self.rfile.read(content_length)
-            data_dict = json.loads(post_data.decode('utf-8'))
-
-            print(data_dict)
-            tgeompoint = TGeomPoint.from_mfjson(json.dumps(data_dict))
-
-            sqlString = f"UPDATE public.{collectionId} SET {trip}= merge({trip}, '{tgeompoint}') where {id} = {featureId}"
-            cursor.execute(sqlString)
-            connection.commit()
-
-            self.send_response(200)
-            self.send_header("Content-type", "application/json")
-            self.end_headers()
-        except Exception as e:
-            self.handle_error(400, str(e))
+    try:
+        #base/collections/{collectionId}/items/{featureId}/tgsequence
+        parsed_path= self.path.split('/')
+        collection_id = parsed_path[2]
+        feature_id = parsed_path[4]
+        
+        # LOad request body
+        content_length = int(self.headers['Content-Length'])
+        post_data = self.rfile.read(content_length)
+        data_dict = json.loads(post_data.decode('utf-8'))
+        
+        #collection exists?
+        cursor.execute(
+            "SELECT id FROM collections WHERE id = %s",
+            (collection_id,)
+        )
+        if cursor.fetchone() is None:
+            self.handle_error(404, f"Collection '{collection_id}' not found")
+            return
+        
+        # feature exists?
+        cursor.execute(
+            "SELECT id FROM moving_features WHERE id = %s AND collection_id = %s",
+            (feature_id, collection_id)
+        )
+        if cursor.fetchone() is None:
+            self.handle_error(404, f"Feature '{feature_id}' not found")
+            return
+        
+        # tgseq dict to TGeomPoint pymeos obj ---*
+        # str(tgeom) clean check /--/--/ the to pymeos tgeompoint object mayb be not required , to be teste with this endpoint
+        # tgeom = json.dumps(data_dict)
+        tgeom = TGeomPoint.from_mfjson(json.dumps(data_dict))
+        
+        # INSERT INTO temporal_geometries 
+        cursor.execute("""
+            INSERT INTO temporal_geometries 
+            (feature_id, geometry_type, trajectory, interpolation)
+            VALUES (%s, %s, %s::tgeompoint, %s)
+            RETURNING id
+        """, (
+            feature_id,
+            data_dict.get("type", "MovingPoint"),
+            str(tgeom),
+            data_dict.get("interpolation", "Linear")
+        ))
+        
+        new_id = cursor.fetchone()[0]
+        connection.commit()
+        
+        # codde 201 success + Location
+        self.send_response(201)
+        self.send_header("Location", f"/collections/{collection_id}/items/{feature_id}/tgsequence/{new_id}")
+        send_json_response(self, 201, data_dict)
+        
+    except Exception as e:
+        # connection.rollback()
+        # print(f"Error in post_tgsequence: {e}")
+        self.handle_error(500, f"Internal server error: {str(e)}")
