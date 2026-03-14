@@ -1,56 +1,57 @@
+# REQ 30: /req/movingfeatures/tpgeometry-delete
+# REQ 31: /req/movingfeatures/tpgeometry-delete-success
 
-#REQ 31
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from utils import send_json_response
 
-from utils import column_discovery, send_json_response, column_discovery2
-from pymeos.db.psycopg2 import MobilityDB
-from psycopg2 import sql
-import json
-from pymeos import pymeos_initialize, pymeos_finalize, TGeomPoint
-from urllib.parse import urlparse, parse_qs
-import math
-from datetime import datetime
 
-hostName = "localhost"
-serverPort = 8080
-
-host = 'localhost'
-port = 25431
-db = 'postgres'
-user = 'postgres'
-password = 'mysecretpassword'
-
-def delete_single_temporal_primitive_geo(self, collectionId, featureId, tGeometryId, connection, cursor):
-    columns = column_discovery(collectionId, cursor)
-    id = columns[0][0]
-    trip = columns[1][0]
-
-    sql_select_trips = f"SELECT asMFJSON({trip}) FROM public.{collectionId} WHERE  {id}={featureId};"
-    cursor.execute(sql_select_trips)
-    connection.commit()
-    rs = cursor.fetchall()
-    print(tGeometryId)
-
-    data_dict = json.loads(rs[0][0])
-    to_change = data_dict.get("sequences")
-    if to_change:
-        to_change.pop(int(tGeometryId))
-    else:
-        to_change = data_dict.get("coordinates")
-        to_change.pop(int(tGeometryId))
-
-    print(to_change)
-
-    if (len(to_change) == 1):
-        data_dict["coordinates"] = to_change[0]
-    else:
-        data_dict["sequences"] = to_change
-
-    updated_json = json.dumps(data_dict)
-    tgeompoint = TGeomPoint.from_mfjson(updated_json)
-    sql_update = f"UPDATE public.{collectionId} SET {trip}= '{tgeompoint}' WHERE {id}={featureId}"
-    cursor.execute(sql_update)
-
-    self.send_response(200)
-    self.send_header("Content-type", "application/json")
-    self.end_headers()
+# DELETE base/collections/{collectionId}/items/{featureId}/tgsequence/{geometryId}
+def delete_single_temporal_primitive_geo(self, collection_id, feature_id, geometry_id, connection, cursor):
+    
+    try:
+        #---------------------------------collection && feature && geomerty exist ??---------------------------------------
+        cursor.execute(
+            "SELECT id FROM collections WHERE id = %s",
+            (collection_id,)
+        )
+        if cursor.fetchone() is None:
+            self.handle_error(404, f"Collection '{collection_id}' not found")
+            return
+        #feature exists?
+        # addition 14/03 clean
+        cursor.execute(
+            "SELECT id FROM moving_features WHERE id = %s AND collection_id = %s",
+            (feature_id, collection_id)
+        )
+        if cursor.fetchone() is None:
+            self.handle_error(404, f"Feature '{feature_id}' not found")
+            return
+        # geometry exists (by collection by mf) 
+        cursor.execute("""
+            SELECT tg.id 
+            FROM temporal_geometries tg
+            JOIN moving_features mf ON tg.feature_id = mf.id
+            WHERE tg.id = %s 
+              AND mf.id = %s 
+              AND mf.collection_id = %s
+        """, (geometry_id, feature_id, collection_id))
+        
+        if cursor.fetchone() is None:
+            self.handle_error(404, f"Temporal geometry {geometry_id} not found")
+            return
+        #----------------------------------------------------------------------------------------------------------------------
+        # delete
+        cursor.execute(
+            "DELETE FROM temporal_geometries WHERE id = %s",
+            (geometry_id,)
+        )
+        
+        connection.commit()
+        
+        # response Req 31)
+        self.send_response(204)
+        self.end_headers()
+        
+    except Exception as e:
+        # connection.rollback()
+        # print(f"Error in delete_single_temporal_primitive_geo: {e}")
+        self.handle_error(500, f"Internal server error: {str(e)}")
