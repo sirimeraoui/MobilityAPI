@@ -35,13 +35,13 @@ def build_feature_from_row(row, collection_id, include_temporal=True):
             times = time_str[1:-1].split(',')
             feature["time"] = [t.strip() for t in times]
     
-    # Parse temporal geometries if included col 8 ********************************check
+    # Parse temporal geometries if included col 8 ***************Only for Retrieve single moving feature
     if include_temporal and len(row) > 8 and row[8]:
         temporal_geometries = []
         tg_list = row[8]
         for tg in tg_list:
             if tg.get('trajectory'):
-                # trajectory is still a JSON string that needs parsing
+                # trajectory bjson to dict
                 traj = json.loads(tg['trajectory'])
                 temporal_geometries.append({
                     "id": tg['id'],
