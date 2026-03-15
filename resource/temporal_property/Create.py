@@ -78,8 +78,8 @@ def post_temporal_property(self, collection_id, feature_id, property_name, conne
         #201
         #re check content clean
         base_url = f"http://{self.server.server_name}:{self.server.server_port}" #clean mod 14/03 **
-        Location = f"{base_url}{path}"  #clean mod 14/03 **
         path = f"/collections/{collection_id}/items/{feature_id}/tproperties/{property_name}/{new_id}"
+        Location = f"{base_url}{path}"  #clean mod 14/03 **
         self.send_response(201)  
         self.send_header("Location", Location)   #clean mod 14/03 **
         send_json_response(self, 201, {"message": "Values added successfully", "id": new_id})
