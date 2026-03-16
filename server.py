@@ -4,6 +4,7 @@ from utils import column_discovery, send_json_response, column_discovery2, handl
 from pymeos.db.psycopg2 import MobilityDB
 from psycopg2 import sql
 import json
+
 from pymeos import *
 from urllib.parse import urlparse, parse_qs
 from resource.collections.Create import post_collections
@@ -16,14 +17,19 @@ from resource.moving_features.Retrieve import get_collection_items
 from resource.moving_feature.Retrieve import get_movement_single_moving_feature
 from resource.moving_feature.Delete import delete_single_moving_feature
 from resource.temporal_geom_seq.Retrieve import get_tgsequence
-from resource.temporal_geom_seq.Create import post_tgsequence, add_movement_data_in_mf
+from resource.temporal_geom_seq.Create import post_tgsequence
 from resource.temporal_prim_geom.Delete import delete_single_temporal_primitive_geo
-from resource.temporal_properties.Retrieve import get_tproperties, get_set_temporal_data
+# 
+from resource.temporal_properties.Retrieve import get_tproperties
 from resource.temporal_properties.Create import post_tproperties
 from resource.temporal_property.Retrieve import get_temporal_property
-from resource.temporal_property.Delete import delete_temporal_property
 from resource.temporal_property.Create import post_temporal_property
+from resource.temporal_property.Delete import delete_temporal_property
 from resource.temporal_prim_value.Delete import delete_temporal_primitive_value
+from resource.temporal_geom_query.distance import get_distance
+from resource.temporal_geom_query.velocity import get_velocity
+from resource.temporal_geom_query.acceleration import get_acceleration
+
 pymeos_initialize()
 
 hostName = "localhost"
@@ -41,90 +47,153 @@ cursor = connection.cursor()
 class MyServer(BaseHTTPRequestHandler):
     # protocol_version = "HTTP/1.1"
     def do_GET(self):
-        # /collections/{collectionId}/items/{mFeatureId}/tgsequence
-        if 'tgsequence' in self.path:
-            self.get_tgsequence(connection, cursor)
-        # /collections/{collectionId}/items/{mFeatureId}/tproperties/{tPropertyName}
+        # ============================================QUERY ENDPOINTS ==========================================================
+        # /collections/{collectionId}/items/{mFeatureId}/tgsequence/{tGeometryId}/distance
+        if '/tgsequence/' in self.path and '/distance' in self.path:
+            parts = self.path.split('/')
+            if len(parts) >= 7:
+                collection_id = parts[2]
+                feature_id = parts[4]
+                geometry_id = parts[6]
+                self.get_distance(collection_id, feature_id, geometry_id, connection, cursor)
+                return
+        
+        # /collections/{collectionId}/items/{mFeatureId}/tgsequence/{tGeometryId}/velocity
+        elif '/tgsequence/' in self.path and '/velocity' in self.path:
+            parts = self.path.split('/')
+            if len(parts) >= 7:
+                collection_id = parts[2]
+                feature_id = parts[4]
+                geometry_id = parts[6]
+                self.get_velocity(collection_id, feature_id, geometry_id, connection, cursor)
+                return
+        
+        # /collections/{collectionId}/items/{mFeatureId}/tgsequence/{tGeometryId}/acceleration
+        elif '/tgsequence/' in self.path and '/acceleration' in self.path:
+            parts = self.path.split('/')
+            if len(parts) >= 7:
+                collection_id = parts[2]
+                feature_id = parts[4]
+                geometry_id = parts[6]
+                self.get_acceleration(collection_id, feature_id, geometry_id, connection, cursor)
+                return
+        
+        # ==================================================== TEMPORAL PROPERTIES ========================================================
+        # /collections/{collectionId}/items/{mFeatureId}/tproperties/{tPropertyName} eg speed
         elif "/tproperties/" in self.path:
             parts = self.path.split('/')
             collectionId = parts[2]
             featureId = parts[4]
             propertyName = parts[6]
             self.get_temporal_property(collectionId, featureId, propertyName, connection, cursor)
+        
         # /collections/{collectionId}/items/{mFeatureId}/tproperties
         elif self.path.endswith("/tproperties"):
-            self.get_tproperties(connection, cursor)
+            parts = self.path.split('/')
+            collectionId = parts[2]
+            featureId = parts[4]
+            self.get_tproperties(collectionId, featureId, connection, cursor)
+        
+        # ==================================================== TGSEQUENCE ========================================================
+        # /collections/{collectionId}/items/{mFeatureId}/tgsequence
+        elif 'tgsequence' in self.path:
+            self.get_tgsequence(connection, cursor)
+        
+        # ==================================================== MOVING FEATURES ==================================================
         # /collections/{collectionId}/items/{mFeatureId}
         elif self.path.startswith('/collections/') and '/items/' in self.path and len(self.path.split('/')) == 5:
             parts = self.path.split('/')
             collectionId = parts[2]
             mFeature_id = parts[4]
             self.get_movement_single_moving_feature(collectionId, mFeature_id, connection, cursor)
+        
         # /collections/{collectionId}/items
         elif '/items' in self.path and self.path.startswith('/collections/'):
             collection_id = self.path.split('/')[2]
             self.get_collection_items(collection_id, connection, cursor)
+        
+        # ============= =============================COLLECTIONS =====================================================
         # /collections
         elif self.path == '/collections':
             self.get_collections(connection, cursor)
+        
         # /collections/{collectionId}
         elif self.path.startswith('/collections/'):
             path_only = urlparse(self.path).path
             collection_id = path_only.split('/')[-1]
             self.get_collection_id(collection_id, connection, cursor)
 
+        # / (home)
         elif self.path == '/':
             self.do_home()
-            # POST requests router
+    
     def do_POST(self):
-        if 'tgsequence' in self.path:
-            self.post_tgsequence()
-        elif self.path == '/collections':
-            self.post_collections(connection, cursor)
-        elif '/items' in self.path and self.path.startswith('/collections/'):
-            collection_id = self.path.split('/')[2]
-            self.post_collection_items(collection_id, connection, cursor)
-        elif self.path.endswith("/tproperties"):
+        # ==================================================== TEMPORAL PROPERTIES ========================================================
+        # /collections/{collectionId}/items/{mFeatureId}/tproperties
+        if self.path.endswith("/tproperties"):
             parts = self.path.split('/')
             collectionId = parts[2]
             featureId = parts[4]
             self.post_tproperties(collectionId, featureId, connection, cursor)
-
+        
+        # /collections/{collectionId}/items/{mFeatureId}/tproperties/{tPropertyName}
         elif "/tproperties/" in self.path:
             parts = self.path.split('/')
             collectionId = parts[2]
             featureId = parts[4]
             propertyName = parts[6]
-
             self.post_temporal_property(collectionId, featureId, propertyName, connection, cursor)
+        
+        # ==================================================== TGSEQUENCE ========================================================
+
+        elif 'tgsequence' in self.path:
+            self.post_tgsequence()
+        
+        # ============= =============================COLLECTIONS =====================================================
+
+        elif self.path == '/collections':
+            self.post_collections(connection, cursor)
+        
+        # ================================================ MOVING FEATURES ========================================================
+        elif '/items' in self.path and self.path.startswith('/collections/'):
+            collection_id = self.path.split('/')[2]
+            self.post_collection_items(collection_id, connection, cursor)
+    
     def do_DELETE(self):
+        #=======================================re check urgt
         if 'tgsequence' in self.path:
             self.do_delete_sequence()
+        #===================================================Delete collection =======================================
         elif self.path.startswith('/collections/') and 'items' not in self.path:
             collection_id = self.path.split('/')[-1]
             self.delete_collection(collection_id, connection, cursor)
-            #delete single moving feature: delete /collections/{collectionId}/items/{mFeatureId}
+        #=======================================================Delete MovingFeature=================================
+        #delete single moving feature: delete /collections/{collectionId}/items/{mFeatureId}
         elif self.path.startswith('/collections/') and '/items/' in self.path and len(self.path.split('/')) == 5:
             components = self.path.split('/')
             collection_id = components[2]
             mFeature_id = components[4]
             self.delete_single_moving_feature(collection_id, mFeature_id, connection, cursor)
+        #========================================================Delete Temporal Property value=================================================
+ #   delete /collections/{collectionId}/items/{mFeatureId}/tproperties/{tPropertyName}/{tValueId}
         elif "/tproperties/" in self.path and len(self.path.split('/')) == 8:
-            #   delete /collections/{collectionId}/items/{mFeatureId}/tproperties/{tPropertyName}/{tValueId}
             parts = self.path.split('/')
             collectionId = parts[2]
             featureId = parts[4]
             propertyName = parts[6]
             tValueId = parts[7]
             self.delete_temporal_primitive_value(collectionId, featureId, propertyName, tValueId, connection, cursor)
+        #============================================================# DELETE temporal property=======================================
         elif "/tproperties/" in self.path:
-            # DELETE temporal property
             parts = self.path.split('/')
             collectionId = parts[2]
             featureId = parts[4]
             propertyName = parts[6]
             self.delete_temporal_property(collectionId, featureId, propertyName, connection, cursor)
+
+
     def do_PUT(self):
+        #===================================================PUT collection========================================
         if self.path.startswith('/collections/'):
             collection_id = self.path.split('/')[-1]
             self.put_collection(collection_id, connection, cursor)
@@ -217,20 +286,26 @@ class MyServer(BaseHTTPRequestHandler):
     def get_tgsequence(self, connection, cursor):
         get_tgsequence(self, connection, cursor)
     #Post:
-
-        #_#_____________
-    def add_movement_data_in_mf(self, collectionId, featureId, connection, cursor):
-        add_movement_data_in_mf(self, collectionId, featureId, connection, cursor)
-
     def post_tgsequence(self,connection, cursor):
         post_tgsequence(self, connection, cursor)
-        #_#____________
+        
+## Resource Temporal Geometry Query
+    #Get
+    def get_distance(self, collection_id, feature_id, geometry_id, connection, cursor):
+        get_distance(self, collection_id, feature_id, geometry_id, connection, cursor)
+    
+    def get_velocity(self, collection_id, feature_id, geometry_id, connection, cursor):
+        get_velocity(self, collection_id, feature_id, geometry_id, connection, cursor)
+    
+    def get_acceleration(self, collection_id, feature_id, geometry_id, connection, cursor):
+        get_acceleration(self, collection_id, feature_id, geometry_id, connection, cursor)
+
 ## Resource Temporal Primitive Geomerty
     #Delete
     def delete_single_temporal_primitive_geo(self, collectionId, featureId, tGeometryId, connection, cursor):
         delete_single_temporal_primitive_geo(self, collectionId, featureId, tGeometryId, connection, cursor)
 
-    #==========???????????
+    #==========***************check urgt
     def do_delete_sequence(self):
         components = self.path.split('/')
         collection_id = components[2]
@@ -238,32 +313,30 @@ class MyServer(BaseHTTPRequestHandler):
         tGeometry_id = self.path.split('/')[6]
         self.delete_single_temporal_primitive_geo(
             collection_id, mfeature_id, tGeometry_id)
-    #==========???????????
+    #=========*********************check urgt
+    
 ## Resource Temporal Properties
-    #Get:
-        #____________________
-    def get_set_temporal_data(self, collectionId, featureId,connection, cursor):
-        get_set_temporal_data(self, collectionId, featureId,connection, cursor)
-
-
-    def get_tproperties(self,connection, cursor):
-        get_tproperties(self,connection, cursor)
-        #____________________
-
-    #Post
+    # Get list of properties
+    def get_tproperties(self, collectionId, featureId, connection, cursor):
+        get_tproperties(self, collectionId, featureId, connection, cursor)
+    
+    # Post new property
     def post_tproperties(self, collectionId, featureId, connection, cursor):
         post_tproperties(self, collectionId, featureId, connection, cursor)
+
 ## Resource Temporal Property
-    #Get
+    # Get single property
     def get_temporal_property(self, collectionId, featureId, propertyName, connection, cursor):
         get_temporal_property(self, collectionId, featureId, propertyName, connection, cursor)
-    #POst
+    
+    # Post values to property
     def post_temporal_property(self, collectionId, featureId, propertyName, connection, cursor):
         post_temporal_property(self, collectionId, featureId, propertyName, connection, cursor)
-    #Delete
-
+    
+    # Delete property
     def delete_temporal_property(self, collectionId, featureId, propertyName, connection, cursor):
         delete_temporal_property(self, collectionId, featureId, propertyName, connection, cursor)
+
 ## Resource Temporal Primitive Value
     def delete_temporal_primitive_value(self, collectionId, featureId, propertyName, tValueId, connection, cursor):
         delete_temporal_primitive_value(self, collectionId, featureId, propertyName, tValueId, connection, cursor)
@@ -273,12 +346,10 @@ class MyServer(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     webServer = HTTPServer((hostName, serverPort), MyServer)
     print("Server started http://%s:%s" % (hostName, serverPort))
-
     try:
         webServer.serve_forever()
     except KeyboardInterrupt:
         pass
-
     connection.commit()
     cursor.close()
     pymeos_finalize()
