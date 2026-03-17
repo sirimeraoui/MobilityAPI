@@ -35,6 +35,6 @@ def delete_single_moving_feature(self, collection_id, feature_id, connection, cu
         self.end_headers()
 
     except Exception as e:
-        # connection.rollback()
+        connection.rollback()
         # print(f"Error deleting feature: {e}")
         self.handle_error(500, f"Internal server error: {str(e)}")

@@ -62,6 +62,6 @@ def post_tgsequence(self, connection, cursor):
         send_json_response(self, 201, data_dict)
         
     except Exception as e:
-        # connection.rollback()
+        connection.rollback()
         # print(f"Error in post_tgsequence: {e}")
         self.handle_error(500, f"Internal server error: {str(e)}")

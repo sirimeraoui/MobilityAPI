@@ -52,6 +52,6 @@ def delete_single_temporal_primitive_geo(self, collection_id, feature_id, geomet
         self.end_headers()
         
     except Exception as e:
-        # connection.rollback()
+        connection.rollback()
         # print(f"Error in delete_single_temporal_primitive_geo: {e}")
         self.handle_error(500, f"Internal server error: {str(e)}")
