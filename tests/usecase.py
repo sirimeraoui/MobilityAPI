@@ -300,9 +300,7 @@ VESSELS_DATA = [
 ]
 
 @pytest.fixture(scope="module")
-def setup_port_data():
-    """Create collection and add 10 ships"""
-    
+def setup_port_data():    
     # Create collection
     collection_data = {
         "title": "belgium_ships",

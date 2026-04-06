@@ -193,25 +193,38 @@ def insert_feature(self, feature, collection_id, connection, cursor):
     connection.commit()
 #___________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
 
+    srid = 4326 
+    if crs and isinstance(crs, dict):
+        props = crs.get("properties", "")
+        # Extract numbers from the CRS string (e.g., "urn:ogc:def:crs:EPSG::25832" -> 25832)
+        import re
+        match = re.search(r'(\d+)', str(props))
+        if match:
+            srid = int(match.group(1))
+        else:
+            srid = 4326  # Default to WGS84 if no number found
+
+
+   
     # INSERT INTO moving_features :temporal_geometries:Insert feature into moving_features table
     cursor.execute("""
         INSERT INTO moving_features 
         (id, collection_id, type, geometry, properties, bbox, time_range, crs, trs)
-        VALUES (%s, %s, %s, trajectory(%s::tgeompoint), %s, %s, %s::tstzrange, %s, %s)
+        VALUES (%s, %s, %s, ST_SetSRID(trajectory(%s::tgeompoint), %s), %s, %s, %s::tstzrange, %s, %s)
         ON CONFLICT (id) DO NOTHING
         RETURNING id
     """, (
         feat_id,
         collection_id,
         "Feature",
-        tgeom_str, 
+        tgeom_str,
+        srid,  
         json.dumps(properties),
         json.dumps(bbox) if bbox else None,
         time_str,
         json.dumps(crs) if crs else None,
         json.dumps(trs) if trs else None
     ))
-    
     inserted = cursor.fetchone()
     
     # INSERT INTO temporal_geometries: If the create feature has a temporal_geom, then add to temporal_geometries table    
@@ -234,9 +247,10 @@ def insert_feature(self, feature, collection_id, connection, cursor):
             tgeom_str,
             interpolation
         ))
-    
+    if inserted and tgeom_str:
+        print("Properties:  *************************          ",json.dumps(properties))
     if inserted:
-        print(f"Inserted feature {feat_id}")
+        # print(f"Inserted feature {feat_id}")
         return feat_id
     else:
         print(f"Feature {feat_id} already exists, skipped")

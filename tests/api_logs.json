@@ -1,6 +1,6 @@
 [
   {
-    "timestamp": "2026-04-03T08:48:00.471935",
+    "timestamp": "2026-04-06T13:59:06.090603",
     "action": "Create belgium_ships collection",
     "url": "http://localhost:8080/collections",
     "method": "POST",
@@ -33,7 +33,7 @@
     }
   },
   {
-    "timestamp": "2026-04-03T08:48:00.499675",
+    "timestamp": "2026-04-06T13:59:06.106001",
     "action": "Create 10 vessels",
     "url": "http://localhost:8080/collections/belgium_ships/items",
     "method": "POST",
@@ -510,7 +510,7 @@
     }
   },
   {
-    "timestamp": "2026-04-03T08:48:00.548626",
+    "timestamp": "2026-04-06T13:59:06.110872",
     "action": "API: Get ships in Antwerp port",
     "url": "http://localhost:8080/collections/belgium_ships/items?bbox=584000%2C5670000%2C593000%2C5680000",
     "method": "GET",
@@ -577,7 +577,7 @@
           ],
           "temporalGeometry": [
             {
-              "id": 370,
+              "id": 37,
               "type": "MovingPoint",
               "datetimes": [
                 "2024-03-15T07:00:00+01",
@@ -661,7 +661,7 @@
           ],
           "temporalGeometry": [
             {
-              "id": 371,
+              "id": 38,
               "type": "MovingPoint",
               "datetimes": [
                 "2024-03-15T07:00:00+01",
@@ -746,7 +746,7 @@
           ],
           "temporalGeometry": [
             {
-              "id": 372,
+              "id": 39,
               "type": "MovingPoint",
               "datetimes": [
                 "2024-03-15T07:00:00+01",
@@ -821,7 +821,7 @@
           ],
           "temporalGeometry": [
             {
-              "id": 373,
+              "id": 40,
               "type": "MovingPoint",
               "datetimes": [
                 "2024-03-15T06:00:00+01",
@@ -890,7 +890,7 @@
           ],
           "temporalGeometry": [
             {
-              "id": 374,
+              "id": 41,
               "type": "MovingPoint",
               "datetimes": [
                 "2024-03-15T09:00:00+01",
@@ -965,7 +965,7 @@
           ],
           "temporalGeometry": [
             {
-              "id": 377,
+              "id": 44,
               "type": "MovingPoint",
               "datetimes": [
                 "2024-03-15T08:00:00+01",
@@ -1040,7 +1040,7 @@
           ],
           "temporalGeometry": [
             {
-              "id": 378,
+              "id": 45,
               "type": "MovingPoint",
               "datetimes": [
                 "2024-03-15T07:30:00+01",
@@ -1115,7 +1115,7 @@
           ],
           "temporalGeometry": [
             {
-              "id": 379,
+              "id": 46,
               "type": "MovingPoint",
               "datetimes": [
                 "2024-03-15T09:30:00+01",
@@ -1137,7 +1137,7 @@
           ]
         }
       ],
-      "timeStamp": "2026-04-03T06:48:00.547748Z",
+      "timeStamp": "2026-04-06T11:59:06.109791Z",
       "numberMatched": 8,
       "numberReturned": 8,
       "links": [
@@ -1150,9 +1150,9 @@
     }
   },
   {
-    "timestamp": "2026-04-03T08:48:00.556924",
+    "timestamp": "2026-04-06T13:59:06.117031",
     "action": "API: Get velocity for Maersk Essen",
-    "url": "http://localhost:8080/collections/belgium_ships/items/maersk_essen/tgsequence/370/velocity",
+    "url": "http://localhost:8080/collections/belgium_ships/items/maersk_essen/tgsequence/37/velocity",
     "method": "GET",
     "status": 200,
     "request_body": null,
@@ -1176,18 +1176,18 @@
       "queryType": "velocity",
       "links": [
         {
-          "href": "http://localhost:8080/collections/belgium_ships/items/maersk_essen/tgsequence/370/velocity",
+          "href": "http://localhost:8080/collections/belgium_ships/items/maersk_essen/tgsequence/37/velocity",
           "rel": "self",
           "type": "application/json"
         }
       ],
-      "timeStamp": "2026-04-03T06:48:00.556442Z"
+      "timeStamp": "2026-04-06T11:59:06.116572Z"
     }
   },
   {
-    "timestamp": "2026-04-03T08:48:00.561572",
+    "timestamp": "2026-04-06T13:59:06.122509",
     "action": "API: Get velocity for CMA CGM Libra",
-    "url": "http://localhost:8080/collections/belgium_ships/items/cma_cgm_libra/tgsequence/371/velocity",
+    "url": "http://localhost:8080/collections/belgium_ships/items/cma_cgm_libra/tgsequence/38/velocity",
     "method": "GET",
     "status": 200,
     "request_body": null,
@@ -1215,18 +1215,18 @@
       "queryType": "velocity",
       "links": [
         {
-          "href": "http://localhost:8080/collections/belgium_ships/items/cma_cgm_libra/tgsequence/371/velocity",
+          "href": "http://localhost:8080/collections/belgium_ships/items/cma_cgm_libra/tgsequence/38/velocity",
           "rel": "self",
           "type": "application/json"
         }
       ],
-      "timeStamp": "2026-04-03T06:48:00.561149Z"
+      "timeStamp": "2026-04-06T11:59:06.121964Z"
     }
   },
   {
-    "timestamp": "2026-04-03T08:48:00.565660",
+    "timestamp": "2026-04-06T13:59:06.127830",
     "action": "API: Get velocity for European Trader (outside port)",
-    "url": "http://localhost:8080/collections/belgium_ships/items/european_trader/tgsequence/375/velocity",
+    "url": "http://localhost:8080/collections/belgium_ships/items/european_trader/tgsequence/42/velocity",
     "method": "GET",
     "status": 200,
     "request_body": null,
@@ -1246,16 +1246,16 @@
       "queryType": "velocity",
       "links": [
         {
-          "href": "http://localhost:8080/collections/belgium_ships/items/european_trader/tgsequence/375/velocity",
+          "href": "http://localhost:8080/collections/belgium_ships/items/european_trader/tgsequence/42/velocity",
           "rel": "self",
           "type": "application/json"
         }
       ],
-      "timeStamp": "2026-04-03T06:48:00.565363Z"
+      "timeStamp": "2026-04-06T11:59:06.127480Z"
     }
   },
   {
-    "timestamp": "2026-04-03T08:48:00.623336",
+    "timestamp": "2026-04-06T13:59:06.228279",
     "action": "API: Get ships with subtrajectory interval 2024-03-15T10:30:00+00/2024-03-15T11:30:00+00",
     "url": "http://localhost:8080/collections/belgium_ships/items?subTrajectory=true&datetime=2024-03-15T10%3A30%3A00%2B00%2F2024-03-15T11%3A30%3A00%2B00",
     "method": "GET",
@@ -1312,7 +1312,7 @@
           ],
           "temporalGeometry": [
             {
-              "id": 374,
+              "id": 41,
               "type": "MovingPoint",
               "datetimes": [
                 "2024-03-15T11:30:00+01:00",
@@ -1387,7 +1387,7 @@
           ],
           "temporalGeometry": [
             {
-              "id": 377,
+              "id": 44,
               "type": "MovingPoint",
               "datetimes": [
                 "2024-03-15T11:30:00+01:00",
@@ -1462,7 +1462,7 @@
           ],
           "temporalGeometry": [
             {
-              "id": 378,
+              "id": 45,
               "type": "MovingPoint",
               "datetimes": [
                 "2024-03-15T11:30:00+01:00"
@@ -1532,7 +1532,7 @@
           ],
           "temporalGeometry": [
             {
-              "id": 379,
+              "id": 46,
               "type": "MovingPoint",
               "datetimes": [
                 "2024-03-15T11:30:00+01:00",
@@ -1554,7 +1554,7 @@
           ]
         }
       ],
-      "timeStamp": "2026-04-03T06:48:00.622687Z",
+      "timeStamp": "2026-04-06T11:59:06.227427Z",
       "numberMatched": 4,
       "numberReturned": 4,
       "links": [

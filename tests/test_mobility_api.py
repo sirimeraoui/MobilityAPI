@@ -274,20 +274,65 @@ def test_create_feature_collection(create_collections):
    
     collection_id = "ships"
     features = []
-    
+  
     for obj in data[1:3]:
         features.append({
             "type": "Feature",
             "id": str(obj["mmsi"]),
+            "properties": obj["properties"],
+            #hardcoded crs trs
             "crs": {  
                 "type": "name",
-                "properties": "urn:ogc:def:crs:EPSG::25832"
-             },
+                "properties": {
+                    "name": "urn:ogc:def:crs:EPSG::25832"
+                }
+             }, 
+            "trs": {
+                "type": "Link",
+                "properties": {
+                    "type": "ogcdef",
+                    "href": "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"
+                }},
             "temporalGeometry": obj["trajectory"],
-            "properties": {
-                "name": f"Ship_{obj['mmsi']}",
-                "type": "cargo"
-            }
+            "temporalProperties": [{
+                    "datetimes": [
+                        "2011-07-14T22:01:01.450Z",
+                        "2011-07-14T23:01:01.450Z",
+                        "2011-07-15T00:01:01.450Z"
+                    ],
+                    "length": {
+                        "type": "Measure",
+                        "form": "http://qudt.org/vocab/quantitykind/Length",
+                        "values": [1, 2.4, 1],
+                        "interpolation": "Linear",
+                        "description": "description1"
+                    },
+                    "discharge": {
+                        "type": "Measure",
+                        "form": "MQS",
+                        "values": [3, 4, 5],
+                        "interpolation": "Step"
+                    }
+                },
+                {
+                    "datetimes": [
+                        "2011-07-15T23:01:01.450Z",
+                        "2011-07-16T00:01:01.450Z"
+                    ],
+                    "camera": {
+                        "type": "Image",
+                        "values": [
+                        "http://.../example/image1",
+                        "VBORw0KGgoAAAANSUhEU......"
+                        ],
+                        "interpolation": "Discrete"
+                    },
+                    "labels": {
+                        "type": "Text",
+                        "values": ["car", "human"],
+                        "interpolation": "Discrete"
+                    }
+                }]
         })
     
     feature_collection = {
@@ -434,8 +479,8 @@ def test_get_items_leaf_with_subtrajectory(create_collections):
 def test_get_single_moving_feature(create_collections):
    
     collection_id = "ships"
-    feature_id = str(data[0]["mmsi"])  
-
+    # feature_id = str(data[0]["mmsi"])  
+    feature_id = str(209992000)  
     resp = requests.get(f"{HOST}/collections/{collection_id}/items/{feature_id}")
     
     print(f"\n=== GET single feature {feature_id} ===")
@@ -758,6 +803,9 @@ def test_delete_temporal_property(setup_property_test_data):
     )
     assert resp.status_code == 404
     #assert cascade delete temporal values #check optional
+
+
+    ####subtemporal is missing 
 # ============================================== TEST delete all collection==============================================
 def test_delete_all_created_collections(create_collections):
     created_collections = ["ships", "boats"]
