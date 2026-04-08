@@ -11,11 +11,8 @@ pymeos_initialize()
 
 # loggerto JSON
 API_LOGS = []
-
-
-
-#ships  data
-# 
+# #ships  data
+# # 
 VESSELS_DATA = [
     {
         "id": "maersk_essen",
@@ -347,10 +344,10 @@ def setup_port_data():
     }
     
     # Cleanup
-    print("\n=== CLEANING UP ===")
-    for vessel in VESSELS_DATA:
-        requests.delete(f"{HOST}/collections/{collection_id}/items/{vessel['id']}")
-    requests.delete(f"{HOST}/collections/{collection_id}")
+    # print("\n=== CLEANING UP ===")
+    # for vessel in VESSELS_DATA:
+    #     requests.delete(f"{HOST}/collections/{collection_id}/items/{vessel['id']}")
+    # requests.delete(f"{HOST}/collections/{collection_id}")
 
 
 # Get ships in port (bbox filter)
@@ -363,6 +360,7 @@ def test_1_get_ships_in_port(setup_port_data):
     # Antwerp port area (meters, EPSG:25832) example
     # port_bbox ="4.146652,51.218067,4.443283,51.309155"
     port_bbox = "584000,5670000,593000,5680000"
+    # port_bbox = "4.1,51.1,4.3,51.3"
     
     resp = requests.get(
         f"{HOST}/collections/{collection_id}/items",

@@ -1,10 +1,10 @@
 [
   {
-    "timestamp": "2026-04-06T13:59:06.090603",
+    "timestamp": "2026-04-08T14:47:09.456924",
     "action": "Create belgium_ships collection",
     "url": "http://localhost:8080/collections",
     "method": "POST",
-    "status": 201,
+    "status": 409,
     "request_body": {
       "title": "belgium_ships",
       "description": "Vessel traffic in Belgian waters - Antwerp port",
@@ -12,28 +12,12 @@
       "itemType": "movingfeature"
     },
     "response_body": {
-      "id": "belgium_ships",
-      "title": "belgium_ships",
-      "description": "Vessel traffic in Belgian waters - Antwerp port",
-      "itemType": "movingfeature",
-      "updateFrequency": 1000,
-      "extent": null,
-      "links": [
-        {
-          "href": "http://localhost:8080/collections/belgium_ships",
-          "rel": "self",
-          "type": "application/json"
-        },
-        {
-          "href": "http://localhost:8080/collections/belgium_ships/items",
-          "rel": "items",
-          "type": "application/json"
-        }
-      ]
+      "code": "409",
+      "description": "Collection \"belgium_ships\" already exists."
     }
   },
   {
-    "timestamp": "2026-04-06T13:59:06.106001",
+    "timestamp": "2026-04-08T14:47:09.465660",
     "action": "Create 10 vessels",
     "url": "http://localhost:8080/collections/belgium_ships/items",
     "method": "POST",
@@ -494,23 +478,12 @@
       ]
     },
     "response_body": {
-      "message": "Created 10 features",
-      "ids": [
-        "maersk_essen",
-        "cma_cgm_libra",
-        "msc_zoe",
-        "ever_given",
-        "stena_impero",
-        "european_trader",
-        "belgium_chem",
-        "antwerp_star",
-        "schelde_river",
-        "diamond_express"
-      ]
+      "message": "Created 0 features",
+      "ids": []
     }
   },
   {
-    "timestamp": "2026-04-06T13:59:06.110872",
+    "timestamp": "2026-04-08T14:47:10.005235",
     "action": "API: Get ships in Antwerp port",
     "url": "http://localhost:8080/collections/belgium_ships/items?bbox=584000%2C5670000%2C593000%2C5680000",
     "method": "GET",
@@ -522,23 +495,9 @@
         {
           "type": "Feature",
           "id": "maersk_essen",
-          "geometry": {
-            "type": "LineString",
-            "coordinates": [
-              [
-                10.216425916,
-                51.19308317
-              ],
-              [
-                10.303791254,
-                51.246098141
-              ],
-              [
-                10.318371664,
-                51.254927439
-              ]
-            ]
-          },
+          "geometry": [
+            null
+          ],
           "properties": {
             "name": "Maersk Essen",
             "type": "container"
@@ -577,7 +536,7 @@
           ],
           "temporalGeometry": [
             {
-              "id": 37,
+              "id": 144,
               "type": "MovingPoint",
               "datetimes": [
                 "2024-03-15T07:00:00+01",
@@ -606,23 +565,9 @@
         {
           "type": "Feature",
           "id": "cma_cgm_libra",
-          "geometry": {
-            "type": "LineString",
-            "coordinates": [
-              [
-                10.201884522,
-                51.184240826
-              ],
-              [
-                10.230972875,
-                51.201923655
-              ],
-              [
-                10.245525403,
-                51.21076228
-              ]
-            ]
-          },
+          "geometry": [
+            null
+          ],
           "properties": {
             "name": "CMA CGM Libra",
             "type": "container"
@@ -661,7 +606,7 @@
           ],
           "temporalGeometry": [
             {
-              "id": 38,
+              "id": 145,
               "type": "MovingPoint",
               "datetimes": [
                 "2024-03-15T07:00:00+01",
@@ -695,19 +640,9 @@
         {
           "type": "Feature",
           "id": "msc_zoe",
-          "geometry": {
-            "type": "LineString",
-            "coordinates": [
-              [
-                10.216425916,
-                51.19308317
-              ],
-              [
-                10.332957659,
-                51.263754865
-              ]
-            ]
-          },
+          "geometry": [
+            null
+          ],
           "properties": {
             "name": "MSC Zoe",
             "type": "container"
@@ -746,7 +681,7 @@
           ],
           "temporalGeometry": [
             {
-              "id": 39,
+              "id": 146,
               "type": "MovingPoint",
               "datetimes": [
                 "2024-03-15T07:00:00+01",
@@ -770,19 +705,9 @@
         {
           "type": "Feature",
           "id": "ever_given",
-          "geometry": {
-            "type": "LineString",
-            "coordinates": [
-              [
-                10.209154523,
-                51.18866223
-              ],
-              [
-                10.325663963,
-                51.259341386
-              ]
-            ]
-          },
+          "geometry": [
+            null
+          ],
           "properties": {
             "name": "Ever Given",
             "type": "container"
@@ -821,7 +746,7 @@
           ],
           "temporalGeometry": [
             {
-              "id": 40,
+              "id": 147,
               "type": "MovingPoint",
               "datetimes": [
                 "2024-03-15T06:00:00+01",
@@ -845,13 +770,9 @@
         {
           "type": "Feature",
           "id": "stena_impero",
-          "geometry": {
-            "type": "Point",
-            "coordinates": [
-              10.252803756,
-              51.215180894
-            ]
-          },
+          "geometry": [
+            null
+          ],
           "properties": {
             "name": "Stena Impero",
             "type": "tanker"
@@ -890,7 +811,7 @@
           ],
           "temporalGeometry": [
             {
-              "id": 41,
+              "id": 148,
               "type": "MovingPoint",
               "datetimes": [
                 "2024-03-15T09:00:00+01",
@@ -914,19 +835,9 @@
         {
           "type": "Feature",
           "id": "antwerp_star",
-          "geometry": {
-            "type": "LineString",
-            "coordinates": [
-              [
-                10.361614822,
-                51.263425027
-              ],
-              [
-                10.24504054,
-                51.192782156
-              ]
-            ]
-          },
+          "geometry": [
+            null
+          ],
           "properties": {
             "name": "Antwerp Star",
             "type": "container"
@@ -965,7 +876,7 @@
           ],
           "temporalGeometry": [
             {
-              "id": 44,
+              "id": 151,
               "type": "MovingPoint",
               "datetimes": [
                 "2024-03-15T08:00:00+01",
@@ -989,19 +900,9 @@
         {
           "type": "Feature",
           "id": "schelde_river",
-          "geometry": {
-            "type": "LineString",
-            "coordinates": [
-              [
-                10.114320154,
-                51.113166605
-              ],
-              [
-                10.230493827,
-                51.183943405
-              ]
-            ]
-          },
+          "geometry": [
+            null
+          ],
           "properties": {
             "name": "Schelde River",
             "type": "tug"
@@ -1040,7 +941,7 @@
           ],
           "temporalGeometry": [
             {
-              "id": 45,
+              "id": 152,
               "type": "MovingPoint",
               "datetimes": [
                 "2024-03-15T07:30:00+01",
@@ -1064,19 +965,9 @@
         {
           "type": "Feature",
           "id": "diamond_express",
-          "geometry": {
-            "type": "LineString",
-            "coordinates": [
-              [
-                10.37621172,
-                51.272246968
-              ],
-              [
-                10.259592818,
-                51.201619046
-              ]
-            ]
-          },
+          "geometry": [
+            null
+          ],
           "properties": {
             "name": "Diamond Express",
             "type": "container"
@@ -1115,7 +1006,7 @@
           ],
           "temporalGeometry": [
             {
-              "id": 46,
+              "id": 153,
               "type": "MovingPoint",
               "datetimes": [
                 "2024-03-15T09:30:00+01",
@@ -1137,7 +1028,7 @@
           ]
         }
       ],
-      "timeStamp": "2026-04-06T11:59:06.109791Z",
+      "timeStamp": "2026-04-08T12:47:10.004488Z",
       "numberMatched": 8,
       "numberReturned": 8,
       "links": [
@@ -1150,9 +1041,9 @@
     }
   },
   {
-    "timestamp": "2026-04-06T13:59:06.117031",
+    "timestamp": "2026-04-08T14:47:10.011104",
     "action": "API: Get velocity for Maersk Essen",
-    "url": "http://localhost:8080/collections/belgium_ships/items/maersk_essen/tgsequence/37/velocity",
+    "url": "http://localhost:8080/collections/belgium_ships/items/maersk_essen/tgsequence/144/velocity",
     "method": "GET",
     "status": 200,
     "request_body": null,
@@ -1176,18 +1067,18 @@
       "queryType": "velocity",
       "links": [
         {
-          "href": "http://localhost:8080/collections/belgium_ships/items/maersk_essen/tgsequence/37/velocity",
+          "href": "http://localhost:8080/collections/belgium_ships/items/maersk_essen/tgsequence/144/velocity",
           "rel": "self",
           "type": "application/json"
         }
       ],
-      "timeStamp": "2026-04-06T11:59:06.116572Z"
+      "timeStamp": "2026-04-08T12:47:10.010579Z"
     }
   },
   {
-    "timestamp": "2026-04-06T13:59:06.122509",
+    "timestamp": "2026-04-08T14:47:10.016896",
     "action": "API: Get velocity for CMA CGM Libra",
-    "url": "http://localhost:8080/collections/belgium_ships/items/cma_cgm_libra/tgsequence/38/velocity",
+    "url": "http://localhost:8080/collections/belgium_ships/items/cma_cgm_libra/tgsequence/145/velocity",
     "method": "GET",
     "status": 200,
     "request_body": null,
@@ -1215,18 +1106,18 @@
       "queryType": "velocity",
       "links": [
         {
-          "href": "http://localhost:8080/collections/belgium_ships/items/cma_cgm_libra/tgsequence/38/velocity",
+          "href": "http://localhost:8080/collections/belgium_ships/items/cma_cgm_libra/tgsequence/145/velocity",
           "rel": "self",
           "type": "application/json"
         }
       ],
-      "timeStamp": "2026-04-06T11:59:06.121964Z"
+      "timeStamp": "2026-04-08T12:47:10.016557Z"
     }
   },
   {
-    "timestamp": "2026-04-06T13:59:06.127830",
+    "timestamp": "2026-04-08T14:47:10.025766",
     "action": "API: Get velocity for European Trader (outside port)",
-    "url": "http://localhost:8080/collections/belgium_ships/items/european_trader/tgsequence/42/velocity",
+    "url": "http://localhost:8080/collections/belgium_ships/items/european_trader/tgsequence/149/velocity",
     "method": "GET",
     "status": 200,
     "request_body": null,
@@ -1246,16 +1137,16 @@
       "queryType": "velocity",
       "links": [
         {
-          "href": "http://localhost:8080/collections/belgium_ships/items/european_trader/tgsequence/42/velocity",
+          "href": "http://localhost:8080/collections/belgium_ships/items/european_trader/tgsequence/149/velocity",
           "rel": "self",
           "type": "application/json"
         }
       ],
-      "timeStamp": "2026-04-06T11:59:06.127480Z"
+      "timeStamp": "2026-04-08T12:47:10.025291Z"
     }
   },
   {
-    "timestamp": "2026-04-06T13:59:06.228279",
+    "timestamp": "2026-04-08T14:47:10.374656",
     "action": "API: Get ships with subtrajectory interval 2024-03-15T10:30:00+00/2024-03-15T11:30:00+00",
     "url": "http://localhost:8080/collections/belgium_ships/items?subTrajectory=true&datetime=2024-03-15T10%3A30%3A00%2B00%2F2024-03-15T11%3A30%3A00%2B00",
     "method": "GET",
@@ -1267,13 +1158,21 @@
         {
           "type": "Feature",
           "id": "stena_impero",
-          "geometry": {
-            "type": "Point",
-            "coordinates": [
-              10.252803756,
-              51.215180894
-            ]
-          },
+          "geometry": [
+            {
+              "type": "Point",
+              "crs": {
+                "type": "name",
+                "properties": {
+                  "name": "EPSG:25832"
+                }
+              },
+              "coordinates": [
+                587500,
+                5674500
+              ]
+            }
+          ],
           "properties": {
             "name": "Stena Impero",
             "type": "tanker"
@@ -1312,11 +1211,11 @@
           ],
           "temporalGeometry": [
             {
-              "id": 41,
+              "id": 148,
               "type": "MovingPoint",
               "datetimes": [
-                "2024-03-15T11:30:00+01:00",
-                "2024-03-15T12:30:00+01:00"
+                "2024-03-15T10:30:00+00",
+                "2024-03-15T11:30:00+00"
               ],
               "coordinates": [
                 [
@@ -1336,19 +1235,27 @@
         {
           "type": "Feature",
           "id": "antwerp_star",
-          "geometry": {
-            "type": "LineString",
-            "coordinates": [
-              [
-                10.361614822,
-                51.263425027
-              ],
-              [
-                10.24504054,
-                51.192782156
+          "geometry": [
+            {
+              "type": "LineString",
+              "crs": {
+                "type": "name",
+                "properties": {
+                  "name": "EPSG:25832"
+                }
+              },
+              "coordinates": [
+                [
+                  588000,
+                  5673000
+                ],
+                [
+                  587000,
+                  5672000
+                ]
               ]
-            ]
-          },
+            }
+          ],
           "properties": {
             "name": "Antwerp Star",
             "type": "container"
@@ -1387,11 +1294,11 @@
           ],
           "temporalGeometry": [
             {
-              "id": 44,
+              "id": 151,
               "type": "MovingPoint",
               "datetimes": [
-                "2024-03-15T11:30:00+01:00",
-                "2024-03-15T12:00:00+01:00"
+                "2024-03-15T10:30:00+00",
+                "2024-03-15T11:00:00+00"
               ],
               "coordinates": [
                 [
@@ -1411,19 +1318,21 @@
         {
           "type": "Feature",
           "id": "schelde_river",
-          "geometry": {
-            "type": "LineString",
-            "coordinates": [
-              [
-                10.114320154,
-                51.113166605
-              ],
-              [
-                10.230493827,
-                51.183943405
+          "geometry": [
+            {
+              "type": "Point",
+              "crs": {
+                "type": "name",
+                "properties": {
+                  "name": "EPSG:25832"
+                }
+              },
+              "coordinates": [
+                586000,
+                5671000
               ]
-            ]
-          },
+            }
+          ],
           "properties": {
             "name": "Schelde River",
             "type": "tug"
@@ -1462,10 +1371,10 @@
           ],
           "temporalGeometry": [
             {
-              "id": 45,
+              "id": 152,
               "type": "MovingPoint",
               "datetimes": [
-                "2024-03-15T11:30:00+01:00"
+                "2024-03-15T10:30:00+00"
               ],
               "coordinates": [
                 [
@@ -1481,19 +1390,27 @@
         {
           "type": "Feature",
           "id": "diamond_express",
-          "geometry": {
-            "type": "LineString",
-            "coordinates": [
-              [
-                10.37621172,
-                51.272246968
-              ],
-              [
-                10.259592818,
-                51.201619046
+          "geometry": [
+            {
+              "type": "LineString",
+              "crs": {
+                "type": "name",
+                "properties": {
+                  "name": "EPSG:25832"
+                }
+              },
+              "coordinates": [
+                [
+                  592000,
+                  5677000
+                ],
+                [
+                  590000,
+                  5675000
+                ]
               ]
-            ]
-          },
+            }
+          ],
           "properties": {
             "name": "Diamond Express",
             "type": "container"
@@ -1532,11 +1449,11 @@
           ],
           "temporalGeometry": [
             {
-              "id": 46,
+              "id": 153,
               "type": "MovingPoint",
               "datetimes": [
-                "2024-03-15T11:30:00+01:00",
-                "2024-03-15T12:30:00+01:00"
+                "2024-03-15T10:30:00+00",
+                "2024-03-15T11:30:00+00"
               ],
               "coordinates": [
                 [
@@ -1554,7 +1471,7 @@
           ]
         }
       ],
-      "timeStamp": "2026-04-06T11:59:06.227427Z",
+      "timeStamp": "2026-04-08T12:47:10.373923Z",
       "numberMatched": 4,
       "numberReturned": 4,
       "links": [

@@ -73,11 +73,12 @@ def get_collection_items(self, collection_id, connection, cursor):
 
         # \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\Build query
         #check left join on mf fetures , is it possible that a mffeature exists without a single tempgeo , same for post f  clean
+        # ST_AsGeoJSON(ST_Transform(ST_SetSRID(trajectory(tg.trajectory), 25832), 4326)) as geometry, replaced by geometry
         query = """
             SELECT 
                 mf.id,
                 mf.type,
-                ST_AsGeoJSON(ST_Transform(ST_SetSRID(trajectory(tg.trajectory), 25832), 4326)) as geometry,
+                tg.geometry,
                 mf.properties,
                 mf.bbox,
                 mf.time_range::text,
@@ -97,7 +98,7 @@ def get_collection_items(self, collection_id, connection, cursor):
 
         # + spatial filter using MobilityDB if bbox param
         if x1 is not None:
-            query += f" AND tg.trajectory && stbox 'STBOX X(({x1},{y1}),({x2},{y2}))'"
+            query += f" AND tg.trajectory && setsrid(stbox 'STBOX X(({x1},{y1}),({x2},{y2}))',srid(tg.trajectory))"
         
         # + temporal filter using MobilityDB if datetime pram
         # check mobility functions **> not urgent clean 
@@ -137,6 +138,7 @@ def get_collection_items(self, collection_id, connection, cursor):
                 )
                 feature = build_feature_from_row(feature_row, collection_id, include_temporal=False)
                 feature["temporalGeometry"] = []  
+                feature["geometry"] = [] 
                 features_dict[feature_id] = feature
             
             # if temporal geometry **
@@ -145,58 +147,41 @@ def get_collection_items(self, collection_id, connection, cursor):
                 if tgeom:
                     # Pymeos object t->MF-JSON
                     mf_json = json.loads(tgeom.as_mfjson())
+                    sub_geometry = None  
 #-------------------------------------------------------check------------------------------------------------
                     # Apply subTrajectory if included req13
                     if subTrajectory and dt1 and dt2:
                         try:
-                            # Clean datetime str:
-                            dt1_clean = urllib.parse.unquote(dt1) if '%' in dt1 else dt1
-                            dt2_clean = urllib.parse.unquote(dt2) if '%' in dt2 else dt2
-                            
-                            # Replace 'T' with space for pqsl
-                            dt1_sql = dt1_clean.replace("T", " ")
-                            dt2_sql = dt2_clean.replace("T", " ")
-                            
-                            # temporal filter check repetition 
-                            sub_query = f"""
-                                SELECT asMFJSON(
-                                    atstbox(trajectory, stbox 'STBOX T([{dt1_sql},{dt2_sql}])')
+
+                            # Use a parameterized query for safety and clarity
+                            interval = f'[{dt1}, {dt2}]'
+                            sub_query = """
+                            WITH time_window AS (
+                                    SELECT tstzspan %s AS tw
                                 )
-                                FROM temporal_geometries
+                            SELECT
+                                    asMFJSON(atTime(tg.trajectory, tw)) as tempotime,
+                                    ST_AsGeoJSON(trajectory(atTime(tg.trajectory, tw))) AS geom
+                                FROM temporal_geometries tg 
+                                CROSS JOIN time_window
                                 WHERE id = %s
                             """
-                            # print(f"Executing subTrajectory: {sub_query}") clean
-                            cursor.execute(sub_query, (row[8],))
+                            cursor.execute(sub_query, (interval,row[8]))
                             sub_row = cursor.fetchone()
                             if sub_row and sub_row[0]:
-                                # print("subTrajectory SUCCESS")
                                 mf_json = json.loads(sub_row[0])
+                                sub_geometry = sub_row[1]  
                         except Exception as e:
-                            print(f"Error in subTrajectory query: {e}")
+                            print(f"Error in subTrajectory: {e}")
                             connection.rollback()
-                            pass
+            
 #----------------------------------------------------------------------------------------------------------------------------------
                     # Apply leaf param if included (Req 24)
                     if leaf and "datetimes" in mf_json:
                         #Take only last point
                         mf_json["coordinates"] = [mf_json["coordinates"][-1]]
                         mf_json["datetimes"] = [mf_json["datetimes"][-1]]
-                        mf_json["interpolation"] = "Discrete"  # Req 24C
-     #**************************************************************************
-                    # Normalize datetimes like input timezone
-                    if "datetimes" in mf_json and dt1:
-                        new_dts = []
-                        for dt in mf_json["datetimes"]:
-                            dt_obj = parser.isoparse(dt)
-                            if dt1:
-                                try:
-                                    tzinfo = tz.gettz(dt1[-6:]) if '+' in dt1 else tz.gettz('UTC')
-                                    dt_obj = dt_obj.astimezone(tzinfo)
-                                except:
-                                    pass
-                            new_dts.append(dt_obj.isoformat())
-                        mf_json["datetimes"] = new_dts
-      #**************************************************************************               
+                        mf_json["interpolation"] = "Discrete"  # Req 24C         
                     # Add to temporalGeometry array
                     temporal_geom = {
                         "id": row[8],
@@ -213,6 +198,15 @@ def get_collection_items(self, collection_id, connection, cursor):
                         temporal_geom["interpolation"] = row[11] or "Linear"
 
                     features_dict[feature_id]["temporalGeometry"].append(temporal_geom)
+
+                    if sub_geometry and isinstance(sub_geometry, str):
+                        try:
+                            geometry = json.loads(sub_geometry)
+                        except:
+                            geometry = None
+                    else:
+                        geometry = None
+                    features_dict[feature_id]["geometry"].append(geometry)
         features = list(features_dict.values())
 
 
@@ -232,6 +226,6 @@ def get_collection_items(self, collection_id, connection, cursor):
     except Exception as e:
         connection.rollback()  
         #clean::
-        # print("ERROR:", e)
-        # traceback.print_exc()
+        print("ERROR:", e)
+        traceback.print_exc()
         self.handle_error(500, f"Internal server error: {str(e)}")

@@ -3,7 +3,7 @@
 import uuid
 import json
 from psycopg2 import sql
-from pymeos import TGeomPoint
+from pymeos import TGeomPoint, TGeomPointSeq
 
 def post_collection_items(self, collection_id, connection, cursor):
     try:
@@ -92,12 +92,15 @@ def insert_feature(self, feature, collection_id, connection, cursor):
     # *convert temporalGeometry to TGeomPoint
     temporal_geometry = feature.get("temporalGeometry")
     tgeom_str = None
+    tgeomsql=None
     if temporal_geometry:#either tempGeom os given as dict or json to str
         if isinstance(temporal_geometry, dict):
-            tgeom = TGeomPoint.from_mfjson(json.dumps(temporal_geometry))
+            tgeom = TGeomPointSeq.from_mfjson(json.dumps(temporal_geometry))
+            tgeomsql= json.dumps(temporal_geometry)
             tgeom_str = str(tgeom)
         elif isinstance(temporal_geometry, str):
-            tgeom = TGeomPoint.from_mfjson(temporal_geometry)
+            tgeom = TGeomPointSeq.from_mfjson(temporal_geometry)
+            tgeomsql= temporal_geometry
             tgeom_str = str(tgeom)
     if tgeom:
         # geometry_geojson = tgeom.as_geojson(srs="EPSG:25832")  #works 1 over 2
@@ -137,6 +140,7 @@ def insert_feature(self, feature, collection_id, connection, cursor):
         time_str = json.dumps(time_range)
 #__________________________________________________________________________________check required tables exist____________________________________________
     #If moving_features table not exists, then create it
+    #geometry Projective geometry of the moving feature. ? spatial project of temporal geom but one mf can have multiple tem geom????
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS moving_features (
             id TEXT PRIMARY KEY,
@@ -157,7 +161,9 @@ def insert_feature(self, feature, collection_id, connection, cursor):
         CREATE TABLE IF NOT EXISTS temporal_geometries (
             id SERIAL PRIMARY KEY,
             feature_id TEXT REFERENCES moving_features(id) ON DELETE CASCADE,
+            collection_id TEXT REFERENCES collections(id) ON DELETE CASCADE,
             geometry_type TEXT,
+            geometry geometry,
             trajectory tgeompoint,
             interpolation TEXT,
             base JSONB,
@@ -193,7 +199,7 @@ def insert_feature(self, feature, collection_id, connection, cursor):
     connection.commit()
 #___________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
 
-    srid = 4326 
+    srid = 4326 #world,
     if crs and isinstance(crs, dict):
         props = crs.get("properties", "")
         # Extract numbers from the CRS string (e.g., "urn:ogc:def:crs:EPSG::25832" -> 25832)
@@ -210,15 +216,14 @@ def insert_feature(self, feature, collection_id, connection, cursor):
     cursor.execute("""
         INSERT INTO moving_features 
         (id, collection_id, type, geometry, properties, bbox, time_range, crs, trs)
-        VALUES (%s, %s, %s, ST_SetSRID(trajectory(%s::tgeompoint), %s), %s, %s, %s::tstzrange, %s, %s)
+        VALUES (%s, %s, %s, trajectory(%s::tgeompoint), %s, %s, %s::tstzrange, %s, %s)
         ON CONFLICT (id) DO NOTHING
         RETURNING id
     """, (
         feat_id,
         collection_id,
         "Feature",
-        tgeom_str,
-        srid,  
+        tgeom_str,  
         json.dumps(properties),
         json.dumps(bbox) if bbox else None,
         time_str,
@@ -229,7 +234,7 @@ def insert_feature(self, feature, collection_id, connection, cursor):
     
     # INSERT INTO temporal_geometries: If the create feature has a temporal_geom, then add to temporal_geometries table    
     #RE CHECK OGC (must the uiser always provide the temporal geom unsure 40 percent)
-    if inserted and tgeom_str:
+    if inserted and tgeom_str and tgeomsql:
         geometry_type = "MovingPoint"  # Default 
         if temporal_geometry and isinstance(temporal_geometry, dict):
             geometry_type = temporal_geometry.get("type", "MovingPoint") #get geom_type of not default MovingPoint
@@ -239,11 +244,13 @@ def insert_feature(self, feature, collection_id, connection, cursor):
         # RE CHECK OGC: i'm assuming i receive one trajectory per inserted feature, what if it's multiple temporal_geometries (trajs) ==>
         cursor.execute("""
             INSERT INTO temporal_geometries 
-            (feature_id, geometry_type, trajectory, interpolation)
-            VALUES (%s, %s, %s::tgeompoint, %s)
+            (feature_id, collection_id,geometry_type,geometry,trajectory, interpolation)
+            VALUES (%s, %s,%s, trajectory(SETSRID(tgeompointFromText(%s),25832)),SETSRID(tgeompointFromText(%s),25832), %s)
         """, (
             feat_id,
+            collection_id,
             geometry_type,
+            tgeom_str,
             tgeom_str,
             interpolation
         ))
