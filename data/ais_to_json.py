@@ -7,13 +7,15 @@ import os
 import geopandas as gpd
 import pandas as pd
 import numpy as np
-
 from utils import get_csv_from_zip
-# Load database configuration from config.json
-with open("../config.json", "r") as file:
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+output_file= os.path.join(script_dir, ".", "trajectories_mf1.json")
+config_path = os.path.join(script_dir, "..", "config.json")
+with open(config_path, "r") as file:
     config = json.load(file)
 
-# Construct the database URL for SQLAlchemy
+
 database_url = (
     f"postgresql://{config['DB_USER']}:{config['DB_PASS']}@"
     f"{config['DB_HOST']}:{config['DB_PORT']}/{config['DB_NAME']}"
@@ -21,7 +23,8 @@ database_url = (
 
 # Create the SQLAlchemy engine
 engine = create_engine(database_url)
-data_csv_path = get_csv_from_zip("aisdk-2024-08-07.zip")
+zip_path = os.path.join(script_dir, "aisdk-2024-08-07.zip")
+data_csv_path = get_csv_from_zip(zip_path,script_dir)
 data_csv_path=os.path.abspath(data_csv_path)
 print(data_csv_path)
 #update this based on whether you're running your db from docker or local/ this is a docker version, otherwise comment it out
@@ -33,18 +36,15 @@ data_csv_path= container_csv_path
 
 # Data collection and 9.3 Cleaning Static Attribute +9.4 Voyage related Attribbutes:
 try:
-    # Read the SQL file CleaningStaticAttributes.sql
-    with open("init.sql", "r") as sql_file:
+    init_sql= os.path.join(script_dir, ".", "init.sql")
+    with open(init_sql, "r") as sql_file:
         sql_query = sql_file.read()
 
-    # Create a text object with parameters
     stmt = text(sql_query).bindparams(data_csv_path=data_csv_path)
 
-    # Execute with parameter
     with engine.connect() as conn:
-        # Start a transaction
+    
         with conn.begin():
-            # Execute the COPY command with parameter
             conn.execute(stmt)
             print(f"Successfully loaded data from {data_csv_path}")
 
@@ -52,45 +52,36 @@ except Exception as e:
     print(f"Error loading data: {e}")
     raise
 
-
-# After your existing data loading code, add this:
-
-def export_json_from_view(engine, output_file="trajectories_mf1.json"):
+def export_json_from_view(engine, output_file=output_file):
     query = "SELECT json_data FROM ships_json ORDER BY mmsi;"
     
     try:
-        # Fetch all JSON data from the view
-               # for df in pd.read_sql(query, engine,chunksize=686):
-        
+    
         df = pd.read_sql(query, engine)
         
         if df.empty:
             print("No data found in ships_json view")
             return []
         
-        # Extract the json_data column as a list of dicts
+     
         json_ready = df['json_data'].tolist()
-        print('777777777777777777777777777777777777777777777')
-        # Ensure output directory exists
-        # os.makedirs(os.path.dirname(output_file), exist_ok=True)
-        
-        # Write to JSON file
+   
         with open(output_file, "w") as f:
             json.dump(json_ready, f, indent=2, default=str)
         
-        print(f"Successfully exported {len(json_ready)} vessels to {output_file}")
+        print(f"Successfully exported {len(json_ready)} ais vessels to {output_file}")
         return json_ready
         
     except Exception as e:
         print(f"Error exporting JSON: {e}")
         raise
 
-# Call the function after your data loading
+
 if __name__ == "__main__":
 
     
-    # Export to JSON
-    export_json_from_view(engine, "trajectories_mf1.json")
+    #to JSON
+    export_json_from_view(engine, output_file=output_file)
    
     
     # DROP VIEW IF EXISTS ships_json CASCADE;

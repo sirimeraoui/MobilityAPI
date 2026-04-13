@@ -2,8 +2,8 @@
 -- ACTIVITY 2: VESSELS - Complete Processing Pipeline
 -- Based on Assignment 2 solutions from ULB
 -- ============================================================================
-
--- 1. Create the MobilityDB extension if not exists
+SET DATESTYLE = 'ISO, DMY';
+ -- 1. Create the MobilityDB extension if not exists
 CREATE EXTENSION IF NOT EXISTS MobilityDB CASCADE;
 
 -- 2. Create the raw AIS input table (based on PDF page 2)
@@ -198,7 +198,7 @@ FROM ShipsBelt;
 -- Envelope: ST_MakeEnvelope(644339, 6042108, 644896, 6042487, 25832)
 
 -- 14. Find ships traveling between Rodby and Puttgarden
-SELECT s.MMSI, s.Name, length(s.Trip)/1000 AS length_km
-FROM Ships s
-WHERE eintersects(s.Trip, ST_MakeEnvelope(651135, 6058230, 651422, 6058548, 25832))
-  AND eintersects(s.Trip, ST_MakeEnvelope(644339, 6042108, 644896, 6042487, 25832));
+-- SELECT s.MMSI, s.Name, length(s.Trip)/1000 AS length_km
+-- FROM Ships s
+-- WHERE eintersects(s.Trip, ST_MakeEnvelope(651135, 6058230, 651422, 6058548, 25832))
+--   AND eintersects(s.Trip, ST_MakeEnvelope(644339, 6042108, 644896, 6042487, 25832));

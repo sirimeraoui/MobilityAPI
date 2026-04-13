@@ -127,11 +127,9 @@ def insert_feature(self, feature, collection_id, connection, cursor):
 
     if bbox is None and bbox_calculated:
         bbox = bbox_calculated
-        print(f"Calculated bbox for {feat_id}: {bbox}")
 
     if time_range is None and time_range_calculated:
         time_range = time_range_calculated
-        print(f"Calculated time_range for {feat_id}: {time_range}")
     # Format time as tstzrange if provided
     time_str = None
     # time [stat, end]
@@ -254,11 +252,9 @@ def insert_feature(self, feature, collection_id, connection, cursor):
             tgeom_str,
             interpolation
         ))
-    if inserted and tgeom_str:
-        print("Properties:  *************************          ",json.dumps(properties))
+
     if inserted:
         # print(f"Inserted feature {feat_id}")
         return feat_id
     else:
-        print(f"Feature {feat_id} already exists, skipped")
         return None

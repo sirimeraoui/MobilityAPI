@@ -1,59 +1,35 @@
-# PG_MFSERVER
-
+# MobilityAPI
 This server is a Python API that allows GET, POST, PUT, and DELETE operations on MobilityDB. The server utilizes the [PyMEOS](https://github.com/MobilityDB/PyMEOS) library.
-
 This implementation follows the OGC API - Moving Features Standard
 
 ## Introduction
-
 This Python API server provides endpoints for interacting with MobilityDB, a temporal extension for PostgreSQL. It allows users to perform CRUD operations (Create, Read, Update, Delete) on MobilityDB data using HTTP methods.
 
 ## Features
-
 - Supports GET, POST, PUT, and DELETE operations.
 - Integrates the PyMEOS library for seamless interaction with MobilityDB.
 - Provides endpoints for managing data stored in MobilityDB.
-## To test
-- create env from requirements.txt
-- docker pull --platform=linux/amd64 mobilitydb/mobilitydb
-- docker volume create mobilitydb_data
-- docker run --name mobilitydb -e POSTGRES_PASSWORD=mysecretpassword -p 25431:5432 -v mobilitydb_data:/var/lib/postgresql -d mobilitydb/mobilitydb
-- python server.py
-- pytest -v -s
+
 ## Prerequisites
 - Linux (ubuntu)
 - A recent version of Pyhton
-- A MobilityDB running locally or on a server
 
-## Installation
 
-To install and run the server, follow these steps:
-
-1. Download the server.py and utils.py file in the same folder.
-2. Dowload the rest-clients and change the queries to match your MOBILITYDB collections.
-3. Change the connection parameters in the server.py file.
-4. Install [PyMEOS](https://github.com/MobilityDB/PyMEOS) 
-    ```bash
-    python3 server.py
-6. Enjoy !
+## RUN SERVER
+- Make script executable: chmod +x run.sh
+- Run only the server: ./run.sh
+#### RUN SERVER WITH TESTS
+- Download ships datasets from: [Denmark Ships DataSets](http://aisdata.ais.dk/?prefix=2024/) aisdk_2024-08-07.zip in data folder
+- Run with integration tests: ./run.sh --with-tests (note: this takes a while due to data preprocessing - expect 23 min )
 
 ## Usage
-
 Send http requests to the api using any http service.
-
 As an example, your can use the ais.sql that will create ships and ship2 tables containing ships data.
 To do that you will have to change the path in the script to the path of your .csv file.
- 
 Here is a link to download ships datasets: [Denmark Ships DataSets](http://aisdata.ais.dk/?prefix=2024/)
-
 ## Developement
-
 This project is in progress.
-
 ## License
-
-
-
 ##Poetry
 poetry install
 

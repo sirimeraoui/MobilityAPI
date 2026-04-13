@@ -6,10 +6,13 @@ import urllib.parse
 import time
 import pandas as pd
 import ijson
+import os
 HOST = "http://localhost:8080"
 
 pymeos_initialize()
 
+script_dir = os.path.dirname(os.path.abspath(__file__))
+data= os.path.join(script_dir, "../data", "trajectories_mf1.json")
 def log_request_response(action: str, response: requests.Response):
     req = response.request
     print(f"\n===| {action.upper()} |===")
@@ -49,22 +52,6 @@ def iter_features_from_index(file_path, start_index=0):
         for i, obj in enumerate(objects):
             if i >= start_index:
                 yield obj
-
-# ----------------------------------------------------------------------
-# Diagnostic prints (optional – still uses ijson to avoid memory spike)
-# ----------------------------------------------------------------------
-print("Loading feature at index 5 for diagnostics...")
-feat5 = get_feature_by_index("../data/trajectories_mf1.json", 5)
-if feat5:
-    print(json.dumps(feat5["mmsi"]))
-    print("tempora object ++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-    print(json.dumps(feat5["trajectory"]))
-    print("----------------------------------------------------------------")
-    print(TGeomPoint.from_mfjson(feat5["trajectory"]))
-    print('rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr')
-else:
-    print("Feature at index 5 not found")
-
 # ----------------------------------------------------------------------
 # Fixtures
 # ----------------------------------------------------------------------
@@ -280,7 +267,7 @@ def test_delete_collection():
 def test_create_single_feature(create_collections):
     
     collection_id = "ships"
-    feature_data = get_feature_by_index("../data/trajectories_mf1.json", 0)  # was data[0]
+    feature_data = get_feature_by_index(data, 0)  # was data[0]
     if feature_data is None:
         pytest.fail("Could not read first feature")
 
@@ -316,7 +303,7 @@ def test_create_feature_collection(create_collections):
     batch = []
     
     # Skip the first feature (index 0) – start from index 1
-    for obj in iter_features_from_index("../data/trajectories_mf1.json", start_index=1):
+    for obj in iter_features_from_index(data , start_index=1):
         batch.append(obj)
         if len(batch) >= batch_size:
             features = []
@@ -478,85 +465,6 @@ def test_create_feature_collection(create_collections):
     assert created_count > 0
 
 
-# def test_create_feature_collection(create_collections):
-#   
-#     collection_id = "ships"
-#     features = []
-#   #98 is the limit per header
-#     for obj in data[1:97]:
-#         features.append({
-#             "type": "Feature",
-#             "id": str(obj["mmsi"]),
-#             "properties": obj["properties"],
-#             #hardcoded crs trs
-#             "crs": {  
-#                 "type": "name",
-#                 "properties": {
-#                     "name": "urn:ogc:def:crs:EPSG::25832"
-#                 }
-#              }, 
-#             "trs": {
-#                 "type": "Link",
-#                 "properties": {
-#                     "type": "ogcdef",
-#                     "href": "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"
-#                 }},
-#             "temporalGeometry": obj["trajectory"],
-#             "temporalProperties": [{
-#                     "datetimes": [
-#                         "2011-07-14T22:01:01.450Z",
-#                         "2011-07-14T23:01:01.450Z",
-#                         "2011-07-15T00:01:01.450Z"
-#                     ],
-#                     "length": {
-#                         "type": "Measure",
-#                         "form": "http://qudt.org/vocab/quantitykind/Length",
-#                         "values": [1, 2.4, 1],
-#                         "interpolation": "Linear",
-#                         "description": "description1"
-#                     },
-#                     "discharge": {
-#                         "type": "Measure",
-#                         "form": "MQS",
-#                         "values": [3, 4, 5],
-#                         "interpolation": "Step"
-#                     }
-#                 },
-#                 {
-#                     "datetimes": [
-#                         "2011-07-15T23:01:01.450Z",
-#                         "2011-07-16T00:01:01.450Z"
-#                     ],
-#                     "camera": {
-#                         "type": "Image",
-#                         "values": [
-#                         "http://.../example/image1",
-#                         "VBORw0KGgoAAAANSUhEU......"
-#                         ],
-#                         "interpolation": "Discrete"
-#                     },
-#                     "labels": {
-#                         "type": "Text",
-#                         "values": ["car", "human"],
-#                         "interpolation": "Discrete"
-#                     }
-#                 }]
-#         })
-#     
-#     feature_collection = {
-#         "type": "FeatureCollection",
-#         "features": features
-#     }
-# 
-#     resp = requests.post(
-#         f"{HOST}/collections/{collection_id}/items",
-#         json=feature_collection,
-#         headers={"Content-Type": "application/json"}
-#     )
-#     log_request_response("Create feature collection", resp)
-#     assert resp.status_code in (201, 409)
-
-
 # ####################################################### GET MOVING FEATURES ##################################################""
 #=======================================================GET /collections/{id}/items==============================================
 def test_get_all_items(create_collections):
@@ -687,8 +595,7 @@ def test_get_items_leaf_with_subtrajectory(create_collections):
 def test_get_single_moving_feature(create_collections):
    
     collection_id = "ships"
-    # feature_id = str(data[0]["mmsi"])  
-    feature_id = str(205096000)  
+    feature_id = str(get_feature_by_index(data, 0)["mmsi"])  
     resp = requests.get(f"{HOST}/collections/{collection_id}/items/{feature_id}")
     
     print(f"\n=== GET single feature {feature_id} ===")
@@ -716,7 +623,7 @@ def test_get_single_moving_feature(create_collections):
 def test_delete_single_moving_feature(create_collections):
     
     collection_id = "ships"
-    feature_id = str(get_feature_by_index("../data/trajectories_mf1.json", 0)["mmsi"])  # was data[0]["mmsi"]
+    feature_id = str(get_feature_by_index(data, 0)["mmsi"])  # was data[0]["mmsi"]
 
     resp = requests.delete(f"{HOST}/collections/{collection_id}/items/{feature_id}")
     
@@ -737,7 +644,7 @@ def test_delete_single_moving_feature(create_collections):
 def test_get_tgsequence(create_collections):
     
     collection_id = "ships"
-    feature_id = str(get_feature_by_index("../data/trajectories_mf1.json", 0)["mmsi"])  # was data[0]["mmsi"]
+    feature_id = str(get_feature_by_index(data, 0)["mmsi"])  
     
     resp = requests.get(
         f"{HOST}/collections/{collection_id}/items/{feature_id}/tgsequence"
