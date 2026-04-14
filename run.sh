@@ -13,7 +13,7 @@ DATA_ZIP_FILENAME="aisdk-2024-08-07.zip"   # Expected name of the zip file in da
 MANUAL_DOWNLOAD_URL="http://aisdata.ais.dk/?prefix=2024/"
 CONFIG_FILE="config.json"
 REQUIREMENTS_FILE="requirements.txt"
-
+TRAJECTORIES_FILE="data/trajectories_mf1.json"  
 show_help() {
     echo "Usage: ./run.sh [OPTIONS]"
     echo ""
@@ -38,7 +38,7 @@ command -v docker >/dev/null 2>&1 || { echo -e "${RED}Docker not found. Please i
 command -v python3 >/dev/null 2>&1 || { echo -e "${RED}Python3 not found.${NC}"; exit 1; }
 command -v lsof >/dev/null 2>&1 || { echo -e "${YELLOW}lsof not found. Install it for automatic port killing.${NC}"; }
 
-# CAS PORT ALREADY IN USE
+# Free port if already in use
 free_port() {
     local PORT=$1
     if command -v lsof >/dev/null 2>&1; then
@@ -88,7 +88,7 @@ EOF
     fi
 }
 
-# API port <-fconig.json
+# Get API port from config.json
 get_api_port() {
     if [ -f "$CONFIG_FILE" ]; then
         python3 -c "import json; print(json.load(open('$CONFIG_FILE')).get('API_PORT', 8080))" 2>/dev/null || echo "8080"
@@ -136,7 +136,8 @@ start_container() {
     echo -e "${YELLOW}Waiting for database to be ready...${NC}"
     sleep 5
 }
-#check for dataset presence
+
+# Check for dataset presence
 check_data() {
     DATA_DIR="data"
     mkdir -p "$DATA_DIR"
@@ -151,7 +152,7 @@ check_data() {
     fi
 }
 
-# data preprocessing
+# Data preprocessing
 run_preprocessing() {
     if [ ! -f "data/ais_to_json.py" ]; then
         echo -e "${RED}Preprocessing script not found: data/ais_to_json.py${NC}"
@@ -181,14 +182,20 @@ run_tests() {
     exit $TEST_EXIT
 }
 
-
 setup_config
 setup_venv
 start_container
 
 if [ "$WITH_TESTS" = true ]; then
-    check_data         
-    run_preprocessing
+   
+    if [ -f "$TRAJECTORIES_FILE" ] && [ -s "$TRAJECTORIES_FILE" ]; then
+        echo -e "${GREEN}Found existing $TRAJECTORIES_FILE (non‑empty). Skipping preprocessing.${NC}"
+    else
+        echo -e "${YELLOW}Missing or empty $TRAJECTORIES_FILE. Running preprocessing...${NC}"
+        check_data
+        run_preprocessing
+    fi
+
     run_tests
 else
     API_PORT=$(get_api_port)

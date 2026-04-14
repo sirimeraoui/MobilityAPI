@@ -19,8 +19,9 @@ This Python API server provides endpoints for interacting with MobilityDB, a tem
 - Make script executable: chmod +x run.sh
 - Run only the server: ./run.sh
 #### RUN SERVER WITH TESTS
-- Download ships datasets from: [Denmark Ships DataSets](http://aisdata.ais.dk/?prefix=2024/) aisdk_2024-08-07.zip in data folder
-- Run with integration tests: ./run.sh --with-tests (note: this takes a while due to data preprocessing - expect 23 min )
+- Run with integration tests: ./run.sh --with-tests 
+(note: this takes a while due to data preprocessing - expect 23 min if the json data file is not present, 21 sec otherwise )
+- If necessary, download ships datasets from: [Denmark Ships DataSets](http://aisdata.ais.dk/?prefix=2024/) aisdk_2024-08-07.zip in data folder
 
 ## Usage
 Send http requests to the api using any http service.
