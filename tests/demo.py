@@ -83,8 +83,7 @@ def setup_data():
     print(f"Successfully posted {created_count} vessels.")
     yield {"collection_id": COLLECTION_ID}
     # No cleanup – data persists
-
-# ---------- Tests (same as before) ----------
+    
 def test_1_ships_in_port(setup_data):
     collection_id = setup_data["collection_id"]
     resp = requests.get(

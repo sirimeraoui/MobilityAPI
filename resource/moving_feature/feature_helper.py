@@ -15,7 +15,7 @@ def build_feature_from_row(row, collection_id, include_temporal=True):
     feature = {
         "type": "Feature",
         "id": str(row[0]),
-        "geometry": geometry,
+        # "geometry": geometry,
         "properties": row[3] or {},
         "bbox": row[4],
         "crs": row[6],

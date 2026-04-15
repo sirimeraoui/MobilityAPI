@@ -78,7 +78,7 @@ def get_collection_items(self, collection_id, connection, cursor):
             SELECT 
                 mf.id,
                 mf.type,
-                tg.geometry,
+                ST_AsGeoJSON(tg.geometry) as geometry,
                 mf.properties,
                 mf.bbox,
                 mf.time_range::text,
@@ -139,11 +139,14 @@ def get_collection_items(self, collection_id, connection, cursor):
                 feature = build_feature_from_row(feature_row, collection_id, include_temporal=False)
                 feature["temporalGeometry"] = []  
                 feature["geometry"] = [] 
+                
                 features_dict[feature_id] = feature
+
             
             # if temporal geometry **
             if row[8]:  # geom_id
                 tgeom = row[10]  # trajectory
+                geometry = row[2]
                 if tgeom:
                     # Pymeos object t->MF-JSON
                     mf_json = json.loads(tgeom.as_mfjson())
@@ -203,9 +206,10 @@ def get_collection_items(self, collection_id, connection, cursor):
                         try:
                             geometry = json.loads(sub_geometry)
                         except:
-                            geometry = None
+                            geometry = json.loads(geometry)
                     else:
-                        geometry = None
+                        geometry = json.loads(geometry)
+                    
                     features_dict[feature_id]["geometry"].append(geometry)
         features = list(features_dict.values())
 
