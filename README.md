@@ -39,6 +39,21 @@ To do that you will have to change the path in the script to the path of your .c
 Here is a link to download ships datasets: [Denmark Ships DataSets](http://aisdata.ais.dk/?prefix=2024/)
 ## Developement
 This project is in progress.
+
+## History and Acknowledgements
+
+MobilityAPI builds on the foundation laid by **[pg_mfserv](https://github.com/MobilityDB/pg_mfserv)**, an OGC API – Moving Features prototype authored at ULB in early 2024. The pg_mfserv initial implementation provided the Python-server skeleton, the OGC endpoint shape, and the PyMEOS-based MobilityDB integration pattern that MobilityAPI extends with a structured resource layout, comprehensive test coverage, and OGC-conformant request/response handling.
+
+**pg_mfserv** is preserved in archived form at [`MobilityDB/pg_mfserv`](https://github.com/MobilityDB/pg_mfserv) for historical reference and scholarly attribution; active development continues in this repository.
+
+Contributors to the lineage, in chronological order:
+
+- **Maxime Schoemans** ([@mschoema](https://github.com/mschoema)) — pg_mfserv founding author (initial commit, OGC-API endpoint design).
+- **Victor Morabito** ([@MrMaxime1er](https://github.com/MrMaxime1er)) — pg_mfserv main developer (column-discovery, request handling, exception handling, route refactors — March 2024).
+- **Sirine Meraoui** ([@sirimeraoui](https://github.com/sirimeraoui)) — current MobilityAPI maintainer (structured resource layout, test infrastructure, OGC conformance, documentation).
+
+See [`AUTHORS.md`](AUTHORS.md) for the complete contributor list.
+
 ## License
 ##Poetry
 poetry install
