@@ -63,13 +63,13 @@ def post_collections(self, connection, cursor):
             "update_frequency": validated_data.get("updateFrequency")
         }
         #!!>  recheck code clean collection_data
-        response = build_collection_response(collection_data, base_url)
+        # response = build_collection_response(collection_data, base_url)
         # __________________________end Build response
 
         # As per OGC, 201 new collection created successfully + endpoint to new collection
         self.send_response(201)
-        self.send_header("Location", f"/collections/{collection_id}")
-        send_json_response(self, 201, response)
+        self.send_header("Location", f"{base_url}/collections/{collection_id}")
+        send_json_response(self, 201)
         
     except json.JSONDecodeError:
         self.handle_error(400, "Invalid JSON- (check ogc specifications for more details)")

@@ -15,11 +15,13 @@ def column_discovery2(collectionId, cursor):
     rs = cursor.fetchall()
     return rs
 
-def send_json_response(handler, status_code, data):
+def send_json_response(handler, status_code, data=None):
     handler.send_response(status_code)
     handler.send_header("Content-type", "application/json")
     handler.end_headers()
-    
+    if data is None:
+     return
+
     # if data is dict,!!> json
     if isinstance(data, dict):
         data = json.dumps(data)

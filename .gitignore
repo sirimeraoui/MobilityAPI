@@ -166,5 +166,7 @@ cython_debug/
 notes.md
 debug.md
 tests/api_logs.json
-
+RTDATA
+rest-clients
+.vscode
 docker-compose.yml
