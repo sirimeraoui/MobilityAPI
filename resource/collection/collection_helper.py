@@ -1,14 +1,32 @@
 from utils import send_json_response
 import json
-
+import re
 def build_collection_response(collection, base_url):
+    print(collection['extent_period'])
+
+    cleaned = re.findall(r"[-+]?\d*\.\d+|\d+", str(collection['extent']))
+
+    # convert to float
+    bbox= list(map(float, cleaned))
     return {
         "id": collection['id'],
         "title": collection['title'],
         "description": collection['description'],
         "itemType": collection['item_type'],
         "updateFrequency": collection['update_frequency'],
-        "extent": None,  
+        "extent": None if collection['extent'] is None else {
+            "spatial": {
+                "bbox": bbox[:4],
+                # "crs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+                "crs": collection['crs']
+            },
+            "temporal": {
+                "interval": str(collection['extent_period']).strip('[]').split(', '),
+            # "trs": "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"
+            "trs": collection['trs']
+            }
+        },
+ 
         "links": [
             {
                 "href": f"{base_url}/collections/{collection['id']}",
@@ -54,11 +72,22 @@ def fetch_collection_by_id(cursor, collection_id):
 
 def fetch_all_collections(cursor):
     cursor.execute("""
-        SELECT id, title, description, update_frequency, item_type
-        FROM collections
-        ORDER BY created_at DESC
+        SELECT c.id, c.title, c.description, c.update_frequency, c.item_type,
+            extent(tg.trajectory) AS extent,
+            extent(tg.trajectory)::tstzspan AS extent_period,
+            ( SELECT mf.crs FROM moving_features mf WHERE mf.collection_id = c.id LIMIT 1
+            ) AS crs,
+
+            (SELECT mf.trs FROM moving_features mf WHERE mf.collection_id = c.id LIMIT 1
+            ) AS trs
+
+        FROM collections c
+        LEFT JOIN temporal_geometries tg ON tg.collection_id = c.id
+        GROUP BY c.id, c.title
+        ORDER BY c.created_at DESC;
     """)
     
+
     rows = cursor.fetchall()
     columns = [desc[0] for desc in cursor.description]
     #CONSTRUCT THE collections dict

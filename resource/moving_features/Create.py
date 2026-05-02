@@ -144,7 +144,7 @@ def insert_feature(self, feature, collection_id, connection, cursor):
             id TEXT PRIMARY KEY,
             collection_id TEXT REFERENCES collections(id) ON DELETE CASCADE,
             type TEXT DEFAULT 'Feature',
-            geometry geometry,
+            geometry geometry, 
             properties JSONB,
             bbox JSONB,
             time_range TSTZRANGE,
@@ -155,6 +155,7 @@ def insert_feature(self, feature, collection_id, connection, cursor):
     """)
     
     #If temporal_geometries table not exists, then create it
+    #geometry eq trajectry and trajectory eq trip clean
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS temporal_geometries (
             id SERIAL PRIMARY KEY,
