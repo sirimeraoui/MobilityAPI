@@ -33,11 +33,11 @@ def build_collection_response(collection, base_url):
                 "rel": "self",
                 "type": "application/json"
             },
-            {
-                "href": f"{base_url}/collections/{collection['id']}/items",
-                "rel": "items",
-                "type": "application/json"
-            }
+            # {
+            #     "href": f"{base_url}/collections/{collection['id']}/items", #ogc yaml mentions HTML if there is one 
+            #     "rel": "items",
+            #     "type": "application/json"
+            # }
         ]
     }
 
@@ -57,10 +57,20 @@ def build_collections_list_response(collections, base_url):
 
 def fetch_collection_by_id(cursor, collection_id):
     cursor.execute("""
-        SELECT id, title, description, update_frequency, item_type
-        FROM collections
-        WHERE id = %s
-    """, (collection_id,))
+        SELECT c.id, c.title, c.description, c.update_frequency, c.item_type,
+        extent(tg.trajectory) AS extent,
+        extent(tg.trajectory)::tstzspan AS extent_period,
+        ( SELECT mf.crs FROM moving_features mf WHERE mf.collection_id =  %s LIMIT 1
+            ) AS crs,
+
+        (SELECT mf.trs FROM moving_features mf WHERE mf.collection_id =  %s LIMIT 1
+            ) AS trs
+        FROM collections c
+        LEFT JOIN temporal_geometries tg ON tg.collection_id = c.id
+        WHERE c.id = %s
+        GROUP BY c.id, c.title
+        ORDER BY c.created_at DESC;
+    """, (collection_id,collection_id,collection_id))
     
     row = cursor.fetchone()
     if not row:
