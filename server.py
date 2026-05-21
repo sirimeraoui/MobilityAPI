@@ -5,7 +5,6 @@ from pymeos.db.psycopg2 import MobilityDB
 from psycopg2 import sql
 import json
 
-from pymeos import *
 from urllib.parse import urlparse, parse_qs
 from resource.collections.Create import post_collections
 from resource.collections.Retrieve import get_collections
@@ -29,8 +28,7 @@ from resource.temporal_prim_value.Delete import delete_temporal_primitive_value
 from resource.temporal_geom_query.distance import get_distance
 from resource.temporal_geom_query.velocity import get_velocity
 from resource.temporal_geom_query.acceleration import get_acceleration
-
-pymeos_initialize()
+import psycopg2
 
 hostName = "localhost"
 serverPort = 8080
@@ -40,9 +38,13 @@ db = 'postgres'
 user = 'postgres'
 password = 'mysecretpassword'
 
-connection = MobilityDB.connect(
+connection = psycopg2.connect(
     host=host, port=port, database=db, user=user, password=password)
 cursor = connection.cursor()
+
+# connection = MobilityDB.connect(
+#     host=host, port=port, database=db, user=user, password=password)
+# cursor = connection.cursor()
 
 class MyServer(BaseHTTPRequestHandler):
     # protocol_version = "HTTP/1.1"
@@ -365,6 +367,5 @@ if __name__ == "__main__":
         pass
     connection.commit()
     cursor.close()
-    pymeos_finalize()
     webServer.server_close()
     print("Server stopped.")

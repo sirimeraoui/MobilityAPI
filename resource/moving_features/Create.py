@@ -4,6 +4,20 @@ import uuid
 import json
 from psycopg2 import sql
 import traceback
+# def log_sql(cursor, query, values=None, filename="debug.sql"):
+#     try:
+#         if values is not None:
+#             full_query = cursor.mogrify(query, values).decode("utf-8")
+#         else:
+#             full_query = str(query)
+
+#         with open(filename, "a", encoding="utf-8") as f:
+#             f.write("\n\n----------------------\n")
+#             f.write(full_query)
+#             f.write(";\n")
+
+#     except Exception as e:
+#         print("SQL logging failed:", e)
 def post_collection_items(self, collection_id, connection, cursor):
     try:
         content_length = int(self.headers.get("Content-Length", 0))
@@ -256,6 +270,7 @@ def insert_feature(self, feature, collection_id, connection, cursor):
         fields=sql.SQL(", ").join(map(sql.Identifier, columns)),
         placeholders=sql.SQL(", ").join(sql.Placeholder() * len(values))
     )
+    # log_sql(cursor, query, values)
     cursor.execute(query, values)
     inserted = cursor.fetchone()
 
@@ -305,6 +320,8 @@ def insert_feature(self, feature, collection_id, connection, cursor):
                 )
                 RETURNING ID
             """
+        
+        # log_sql(cursor, query, values)
         cursor.execute(query, values)
         inserted = cursor.fetchone()
     if inserted:

@@ -6,7 +6,6 @@
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from utils import send_json_response
-from pymeos import TGeomPoint
 from urllib.parse import urlparse, parse_qs
 import json
 from datetime import datetime
@@ -86,7 +85,7 @@ def get_collection_items(self, collection_id, connection, cursor):
                 mf.trs,
                 tg.id as geom_id,
                 tg.geometry_type,
-                tg.trajectory,
+                asMFJSON(tg.trajectory) AS trajectory,
                 tg.interpolation,
                 tg.base,
                 COUNT(*) OVER() AS total_count
@@ -145,11 +144,11 @@ def get_collection_items(self, collection_id, connection, cursor):
             
             # if temporal geometry **
             if row[8]:  # geom_id
-                tgeom = row[10]  # trajectory
+                tgeom_mfjson= row[10]  # trajectory
                 geometry = row[2]
-                if tgeom:
+                if tgeom_mfjson:
                     # Pymeos object t->MF-JSON
-                    mf_json = json.loads(tgeom.as_mfjson())
+                    mf_json = json.loads(tgeom_mfjson)
                     sub_geometry = None  
 #-------------------------------------------------------check------------------------------------------------
                     # Apply subTrajectory if included req13
@@ -230,6 +229,6 @@ def get_collection_items(self, collection_id, connection, cursor):
     except Exception as e:
         connection.rollback()  
         #clean::
-        print("ERROR:", e)
-        traceback.print_exc()
+        # print("ERROR:", e, flush=True)
+        # traceback.print_exc()
         self.handle_error(500, f"Internal server error: {str(e)}")

@@ -9,7 +9,7 @@ import ijson
 import os
 HOST = "http://localhost:8080"
 
-pymeos_initialize()
+# pymeos_initialize()
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 data= os.path.join(script_dir, "../data", "trajectories_mf1.json")
@@ -1047,7 +1047,7 @@ def test_delete_temporal_property(setup_property_test_data):
 
 
 def test_finalize():
-    pymeos_finalize()
+    # pymeos_finalize()
     print("#######################################################################################")
     print("***************************************END OF TESTS************************************")
     print("#######################################################################################")
