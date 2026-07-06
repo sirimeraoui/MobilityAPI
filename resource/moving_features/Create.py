@@ -2,96 +2,109 @@
 # REQ 17: /req/movingfeatures/features-post-success
 import uuid
 import json
+
 from psycopg2 import sql
 import traceback
-# def log_sql(cursor, query, values=None, filename="debug.sql"):
-#     try:
-#         if values is not None:
-#             full_query = cursor.mogrify(query, values).decode("utf-8")
-#         else:
-#             full_query = str(query)
 
-#         with open(filename, "a", encoding="utf-8") as f:
-#             f.write("\n\n----------------------\n")
-#             f.write(full_query)
-#             f.write(";\n")
+from fastapi import HTTPException
+from fastapi.responses import JSONResponse
 
-#     except Exception as e:
-#         print("SQL logging failed:", e)
-def post_collection_items(self, collection_id, connection, cursor):
+
+def post_collection_items(collection_id: str, data: dict, connection,cursor):
+
+    conn = connection
     try:
-        content_length = int(self.headers.get("Content-Length", 0))
-        post_data = self.rfile.read(content_length)
-        data = json.loads(post_data.decode("utf-8"))
-
         object_type = data.get("type")
         if not object_type:
-            raise Exception("DataError: Missing mandatory 'type'")
+            raise HTTPException(
+                status_code=400,
+                detail="Missing mandatory 'type'"
+            )
 
-        # Check the target collection exists eg ships
+        # Check collection exists
         cursor.execute(
             "SELECT id FROM collections WHERE id = %s",
             (collection_id,)
         )
+
         if cursor.fetchone() is None:
-            raise Exception(f'DataError: collection with id {collection_id} does not exist')
+            raise HTTPException(
+                status_code=404,
+                detail=f"Collection '{collection_id}' not found"
+            )
 
         created_feature_ids = []
 
         if object_type == "FeatureCollection":
-            features = data.get("features")
-            if not isinstance(features, list):
-                raise Exception("DataError: FeatureCollection missing 'features' array")
 
-            for feat in features:
-                new_id = insert_feature(self, feat, collection_id, connection, cursor)
-                if new_id:
-                    created_feature_ids.append(new_id)
+            features = data.get("features")
+
+            if not isinstance(features, list):
+                raise HTTPException(
+                    status_code=400,
+                    detail="FeatureCollection missing 'features' array"
+                )
+
+            for feature in features:
+                feature_id = insert_feature(
+                    feature,
+                    collection_id,
+                    conn,
+                    cursor
+                )
+
+                if feature_id:
+                    created_feature_ids.append(feature_id)
 
         elif object_type == "Feature":
-            new_id = insert_feature(self, data, collection_id, connection, cursor)
-            if new_id:
-                created_feature_ids.append(new_id)
-#object_type is neither Feature or FeatureCollection
+
+            feature_id = insert_feature(
+                data,
+                collection_id,
+                conn,
+                cursor
+            )
+
+            if feature_id:
+                created_feature_ids.append(feature_id)
+
         else:
-            raise Exception("DataError: Invalid 'type'")
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid 'type'"
+            )
 
-        connection.commit()
+        conn.commit()
 
-        # Req17: 201 POST with location headers
-        self.send_response(201)
-        self.send_header("Content-Type", "application/json")
-        
-        # Add Location header for each created feature
-        for fid in created_feature_ids:
-            self.send_header("Location", f"/collections/{collection_id}/items/{fid}")
-        
-        self.end_headers()
-        
-        response = {
-            "message": f"Created {len(created_feature_ids)} features",
-            "ids": created_feature_ids
-        }
-        self.wfile.write(bytes(json.dumps(response), "utf-8"))
+        return JSONResponse(
+            status_code=201,
+            content={
+                "message": f"Created {len(created_feature_ids)} features",
+                "ids": created_feature_ids
+            },
+            headers={
+                "Location":
+                f"/collections/{collection_id}/items/{created_feature_ids[0]}"
+                if created_feature_ids else ""
+            }
+        )
+
+    except HTTPException:
+        conn.rollback()
+        raise
 
     except Exception as e:
-        connection.rollback()
-        print(f"Error in post_tproperties: {e}")
-        traceback.print_exc()
+        conn.rollback()
+
         msg = str(e)
-        if "does not exist" in msg:
-            code = 404
-        elif "DataError" in msg:
-            code = 400
-        elif "duplicate key" in msg.lower():
-            code = 409
-        else:
-            code = 500
-        print("error", msg)
-        self.handle_error(code, msg)
+
+        if "duplicate key" in msg.lower():
+            raise HTTPException(status_code=409, detail=msg)
+
+        raise HTTPException(status_code=500, detail=msg)
 
 #add single moving feature to moving_features table
-def insert_feature(self, feature, collection_id, connection, cursor):
+def insert_feature(feature, collection_id, connection, cursor):
     if feature.get("type") != "Feature":
         raise Exception("DataError: Invalid feature type")
 

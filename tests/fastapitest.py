@@ -261,379 +261,379 @@ def test_delete_collection():
 #************************************************************** MOVING FEATURES CREATE***************************************************************
 ################################################################POST###########################################################
 #====================================================POST /collections/{id}/items - single feature==============================================================
-# def test_create_single_feature(create_collections):
+def test_create_single_feature(create_collections):
     
-#     collection_id = "ships"
-#     feature_data = get_feature_by_index(data, 0)  # was data[0]
-#     if feature_data is None:
-#         pytest.fail("Could not read first feature")
+    collection_id = "ships"
+    feature_data = get_feature_by_index(data, 0)  # was data[0]
+    if feature_data is None:
+        pytest.fail("Could not read first feature")
 
-#     feature = {
-#         "type": "Feature",
-#         "id": str(feature_data["mmsi"]),
-#         "crs": {
-#             "type": "name",
-#             "properties": "urn:ogc:def:crs:EPSG::25832"
-#         },
-#         "temporalGeometry": json.loads(feature_data["trajectory"]),
-#         "properties": {
-#             "name": f"Ship_{feature_data['mmsi']}",
-#             "type": "cargo"
-#         }
-#     }
+    feature = {
+        "type": "Feature",
+        "id": str(feature_data["mmsi"]),
+        "crs": {
+            "type": "name",
+            "properties": "urn:ogc:def:crs:EPSG::25832"
+        },
+        "temporalGeometry": json.loads(feature_data["trajectory"]),
+        "properties": {
+            "name": f"Ship_{feature_data['mmsi']}",
+            "type": "cargo"
+        }
+    }
 
-#     resp = requests.post(
-#         f"{HOST}/collections/{collection_id}/items",
-#         json=feature,#recheck req body per ogc
-#         headers={"Content-Type": "application/json"}
-#     )
-#     log_request_response("Create single feature", resp)
-#     assert resp.status_code in (201, 409)
+    resp = requests.post(
+        f"{HOST}/collections/{collection_id}/items",
+        json=feature,#recheck req body per ogc
+        headers={"Content-Type": "application/json"}
+    )
+    log_request_response("Create single feature", resp)
+    assert resp.status_code in (201, 409)
 
 
 # #=====================================================POST /collections/{id}/items - feature collection================================
 
-# def test_create_feature_collection(create_collections):
-#     collection_id = "ships"
-#     batch_size = 20 # max96
-#     created_count = 0
-#     batch = []
+def test_create_feature_collection(create_collections):
+    collection_id = "ships"
+    batch_size = 20 # max96
+    created_count = 0
+    batch = []
     
-#     # Skip the first feature (index 0) – start from index 1
-#     for obj in iter_features_from_index(data , start_index=1):
-#         batch.append(obj)
-#         if len(batch) >= batch_size:
-#             features = []
-#             for o in batch:
-#                 features.append({
-#                     "type": "Feature",
-#                     "id": str(o["mmsi"]),
-#                     "properties": o["properties"],
-#                     "crs": {
-#                         "type": "name",
-#                         "properties": {
-#                             "name": "urn:ogc:def:crs:EPSG::25832"
-#                         }
-#                     },
-#                     "trs": {
-#                         "type": "Link",
-#                         "properties": {
-#                             "type": "ogcdef",
-#                             "href": "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"
-#                         }
-#                     },
-#                     "temporalGeometry": json.loads(o["trajectory"]),
-#                     "temporalProperties": [{
-#                         "datetimes": [
-#                             "2011-07-14T22:01:01.450Z",
-#                             "2011-07-14T23:01:01.450Z",
-#                             "2011-07-15T00:01:01.450Z"
-#                         ],
-#                         "length": {
-#                             "type": "Measure",
-#                             "form": "http://qudt.org/vocab/quantitykind/Length",
-#                             "values": [1, 2.4, 1],
-#                             "interpolation": "Linear",
-#                             "description": "description1"
-#                         },
-#                         "discharge": {
-#                             "type": "Measure",
-#                             "form": "MQS",
-#                             "values": [3, 4, 5],
-#                             "interpolation": "Step"
-#                         }
-#                     },
-#                     {
-#                         "datetimes": [
-#                             "2011-07-15T23:01:01.450Z",
-#                             "2011-07-16T00:01:01.450Z"
-#                         ],
-#                         "camera": {
-#                             "type": "Image",
-#                             "values": [
-#                             "http://.../example/image1",
-#                             "VBORw0KGgoAAAANSUhEU......"
-#                             ],
-#                             "interpolation": "Discrete"
-#                         },
-#                         "labels": {
-#                             "type": "Text",
-#                             "values": ["car", "human"],
-#                             "interpolation": "Discrete"
-#                         }
-#                     }]
-#                 })
+    # Skip the first feature (index 0) – start from index 1
+    for obj in iter_features_from_index(data , start_index=1):
+        batch.append(obj)
+        if len(batch) >= batch_size:
+            features = []
+            for o in batch:
+                features.append({
+                    "type": "Feature",
+                    "id": str(o["mmsi"]),
+                    "properties": o["properties"],
+                    "crs": {
+                        "type": "name",
+                        "properties": {
+                            "name": "urn:ogc:def:crs:EPSG::25832"
+                        }
+                    },
+                    "trs": {
+                        "type": "Link",
+                        "properties": {
+                            "type": "ogcdef",
+                            "href": "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"
+                        }
+                    },
+                    "temporalGeometry": json.loads(o["trajectory"]),
+                    "temporalProperties": [{
+                        "datetimes": [
+                            "2011-07-14T22:01:01.450Z",
+                            "2011-07-14T23:01:01.450Z",
+                            "2011-07-15T00:01:01.450Z"
+                        ],
+                        "length": {
+                            "type": "Measure",
+                            "form": "http://qudt.org/vocab/quantitykind/Length",
+                            "values": [1, 2.4, 1],
+                            "interpolation": "Linear",
+                            "description": "description1"
+                        },
+                        "discharge": {
+                            "type": "Measure",
+                            "form": "MQS",
+                            "values": [3, 4, 5],
+                            "interpolation": "Step"
+                        }
+                    },
+                    {
+                        "datetimes": [
+                            "2011-07-15T23:01:01.450Z",
+                            "2011-07-16T00:01:01.450Z"
+                        ],
+                        "camera": {
+                            "type": "Image",
+                            "values": [
+                            "http://.../example/image1",
+                            "VBORw0KGgoAAAANSUhEU......"
+                            ],
+                            "interpolation": "Discrete"
+                        },
+                        "labels": {
+                            "type": "Text",
+                            "values": ["car", "human"],
+                            "interpolation": "Discrete"
+                        }
+                    }]
+                })
             
-#             feature_collection = {
-#                 "type": "FeatureCollection",
-#                 "features": features
-#             }
+            feature_collection = {
+                "type": "FeatureCollection",
+                "features": features
+            }
             
-#             resp = requests.post(
-#                 f"{HOST}/collections/{collection_id}/items",
-#                 json=feature_collection,
-#                 headers={"Content-Type": "application/json"}
-#             )
+            resp = requests.post(
+                f"{HOST}/collections/{collection_id}/items",
+                json=feature_collection,
+                headers={"Content-Type": "application/json"}
+            )
             
-#             if resp.status_code in (201, 409):
-#                 created_count += len(batch)
-#                 print(f"Batch: Created {len(batch)} features")
-#             batch = []  # free memory
+            if resp.status_code in (201, 409):
+                created_count += len(batch)
+                print(f"Batch: Created {len(batch)} features")
+            batch = []  # free memory
     
-#     # Last batch
-#     if batch:
-#         features = []
-#         for o in batch:
-#             features.append({
-#                 "type": "Feature",
-#                 "id": str(o["mmsi"]),
-#                 "properties": o["properties"],
-#                 "crs": {
-#                     "type": "name",
-#                     "properties": {
-#                         "name": "urn:ogc:def:crs:EPSG::25832"
-#                     }
-#                 },
-#                 "trs": {
-#                     "type": "Link",
-#                     "properties": {
-#                         "type": "ogcdef",
-#                         "href": "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"
-#                     }
-#                 },
-#                 "temporalGeometry": o["trajectory"],
-#                 "temporalProperties": [{
-#                     "datetimes": [
-#                         "2011-07-14T22:01:01.450Z",
-#                         "2011-07-14T23:01:01.450Z",
-#                         "2011-07-15T00:01:01.450Z"
-#                     ],
-#                     "length": {
-#                         "type": "Measure",
-#                         "form": "http://qudt.org/vocab/quantitykind/Length",
-#                         "values": [1, 2.4, 1],
-#                         "interpolation": "Linear",
-#                         "description": "description1"
-#                     },
-#                     "discharge": {
-#                         "type": "Measure",
-#                         "form": "MQS",
-#                         "values": [3, 4, 5],
-#                         "interpolation": "Step"
-#                     }
-#                 },
-#                 {
-#                     "datetimes": [
-#                         "2011-07-15T23:01:01.450Z",
-#                         "2011-07-16T00:01:01.450Z"
-#                     ],
-#                     "camera": {
-#                         "type": "Image",
-#                         "values": [
-#                         "http://.../example/image1",
-#                         "VBORw0KGgoAAAANSUhEU......"
-#                         ],
-#                         "interpolation": "Discrete"
-#                     },
-#                     "labels": {
-#                         "type": "Text",
-#                         "values": ["car", "human"],
-#                         "interpolation": "Discrete"
-#                     }
-#                 }]
-#             })
+    # Last batch
+    if batch:
+        features = []
+        for o in batch:
+            features.append({
+                "type": "Feature",
+                "id": str(o["mmsi"]),
+                "properties": o["properties"],
+                "crs": {
+                    "type": "name",
+                    "properties": {
+                        "name": "urn:ogc:def:crs:EPSG::25832"
+                    }
+                },
+                "trs": {
+                    "type": "Link",
+                    "properties": {
+                        "type": "ogcdef",
+                        "href": "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"
+                    }
+                },
+                "temporalGeometry": o["trajectory"],
+                "temporalProperties": [{
+                    "datetimes": [
+                        "2011-07-14T22:01:01.450Z",
+                        "2011-07-14T23:01:01.450Z",
+                        "2011-07-15T00:01:01.450Z"
+                    ],
+                    "length": {
+                        "type": "Measure",
+                        "form": "http://qudt.org/vocab/quantitykind/Length",
+                        "values": [1, 2.4, 1],
+                        "interpolation": "Linear",
+                        "description": "description1"
+                    },
+                    "discharge": {
+                        "type": "Measure",
+                        "form": "MQS",
+                        "values": [3, 4, 5],
+                        "interpolation": "Step"
+                    }
+                },
+                {
+                    "datetimes": [
+                        "2011-07-15T23:01:01.450Z",
+                        "2011-07-16T00:01:01.450Z"
+                    ],
+                    "camera": {
+                        "type": "Image",
+                        "values": [
+                        "http://.../example/image1",
+                        "VBORw0KGgoAAAANSUhEU......"
+                        ],
+                        "interpolation": "Discrete"
+                    },
+                    "labels": {
+                        "type": "Text",
+                        "values": ["car", "human"],
+                        "interpolation": "Discrete"
+                    }
+                }]
+            })
         
-#         feature_collection = {
-#             "type": "FeatureCollection",
-#             "features": features
-#         }
+        feature_collection = {
+            "type": "FeatureCollection",
+            "features": features
+        }
         
-#         resp = requests.post(
-#             f"{HOST}/collections/{collection_id}/items",
-#             json=feature_collection,
-#             headers={"Content-Type": "application/json"}
-#         )
+        resp = requests.post(
+            f"{HOST}/collections/{collection_id}/items",
+            json=feature_collection,
+            headers={"Content-Type": "application/json"}
+        )
         
-#         if resp.status_code in (201, 409):
-#             created_count += len(batch)
-#             print(f"Batch: Created {len(batch)} features")
+        if resp.status_code in (201, 409):
+            created_count += len(batch)
+            print(f"Batch: Created {len(batch)} features")
     
-#     print(f"Successfully created {created_count} features")
-#     assert created_count > 0
+    print(f"Successfully created {created_count} features")
+    assert created_count > 0
 
 
 # # ####################################################### GET MOVING FEATURES ##################################################""
 # #=======================================================GET /collections/{id}/items==============================================
-# def test_get_all_items(create_collections):
-#     collection_id = "ships"
-#     resp = requests.get(f"{HOST}/collections/{collection_id}/items")
-#     log_request_response(f"GET all items from {collection_id}", resp)
-#     assert resp.status_code == 200
+def test_get_all_items(create_collections):
+    collection_id = "ships"
+    resp = requests.get(f"{HOST}/collections/{collection_id}/items")
+    log_request_response(f"GET all items from {collection_id}", resp)
+    assert resp.status_code == 200
 
-#     data_resp = resp.json()
-#     assert data_resp["type"] == "FeatureCollection"
-#     assert "features" in data_resp
-#     assert "numberMatched" in data_resp
-#     assert "numberReturned" in data_resp
-#     assert "links" in data_resp
-#     assert data_resp["numberReturned"] == len(data_resp["features"])
+    data_resp = resp.json()
+    assert data_resp["type"] == "FeatureCollection"
+    assert "features" in data_resp
+    assert "numberMatched" in data_resp
+    assert "numberReturned" in data_resp
+    assert "links" in data_resp
+    assert data_resp["numberReturned"] == len(data_resp["features"])
 
 # #==================================================GET /collections/{id}/items?limit=1==========================================
-# def test_get_items_with_limit(create_collections):
+def test_get_items_with_limit(create_collections):
 
-#     collection_id = "ships"
-#     limit = 1
-#     resp = requests.get(
-#         f"{HOST}/collections/{collection_id}/items?limit={limit}")
-#     log_request_response(f"GET items with limit={limit}", resp)
-#     assert resp.status_code == 200
+    collection_id = "ships"
+    limit = 1
+    resp = requests.get(
+        f"{HOST}/collections/{collection_id}/items?limit={limit}")
+    log_request_response(f"GET items with limit={limit}", resp)
+    assert resp.status_code == 200
 
-#     data_resp = resp.json()
-#     assert len(data_resp["features"]) <= limit
-#     assert data_resp["numberReturned"] == len(data_resp["features"])
+    data_resp = resp.json()
+    assert len(data_resp["features"]) <= limit
+    assert data_resp["numberReturned"] == len(data_resp["features"])
 
 
 # #=================================================GET /collections/{id}/items?bbox=...====================================================
-# def test_get_items_with_bbox(create_collections):
+def test_get_items_with_bbox(create_collections):
    
-#     collection_id = "ships"
-#     bbox = "12.675237,54.524345,12.685237,54.534345" #check , string or obj array?
-#     resp = requests.get(
-#         f"{HOST}/collections/{collection_id}/items?bbox={bbox}")
-#     log_request_response(f"GET items with bbox={bbox}", resp)
-#     assert resp.status_code == 200
+    collection_id = "ships"
+    bbox = "12.675237,54.524345,12.685237,54.534345" #check , string or obj array?
+    resp = requests.get(
+        f"{HOST}/collections/{collection_id}/items?bbox={bbox}")
+    log_request_response(f"GET items with bbox={bbox}", resp)
+    assert resp.status_code == 200
 
-#     data_resp = resp.json()
-#     #first 1s temp geo -check
-#     #BBOX is returned null , recheck
-#     for f in data_resp["features"]:
-#         if "temporalGeometry" in f and f["temporalGeometry"]:
-#             coords = f["temporalGeometry"][0]["coordinates"]
-#             if coords:
-#                 x, y = coords[0][0], coords[0][1]
-#                 x1, y1, x2, y2 = map(float, bbox.split(','))
-#                 assert x1 <= x <= x2
-#                 assert y1 <= y <= y2
+    data_resp = resp.json()
+    #first 1s temp geo -check
+    #BBOX is returned null , recheck
+    for f in data_resp["features"]:
+        if "temporalGeometry" in f and f["temporalGeometry"]:
+            coords = f["temporalGeometry"][0]["coordinates"]
+            if coords:
+                x, y = coords[0][0], coords[0][1]
+                x1, y1, x2, y2 = map(float, bbox.split(','))
+                assert x1 <= x <= x2
+                assert y1 <= y <= y2
 
 
 # #==============================================GET /collections/{id}/items?datetime=...===============================================
-# def test_get_items_with_datetime(create_collections):
+def test_get_items_with_datetime(create_collections):
     
-#     collection_id = "ships"
-#     dt = urllib.parse.quote("2024-03-01T00:00:00+01")
-#     resp = requests.get(
-#         f"{HOST}/collections/{collection_id}/items?datetime={dt}")
-#     log_request_response(f"GET items with datetime={dt}", resp)
-#     assert resp.status_code == 200
+    collection_id = "ships"
+    dt = urllib.parse.quote("2024-03-01T00:00:00+01")
+    resp = requests.get(
+        f"{HOST}/collections/{collection_id}/items?datetime={dt}")
+    log_request_response(f"GET items with datetime={dt}", resp)
+    assert resp.status_code == 200
 
 # #=======================================GET /collections/{id}/items?limit=invalid should return 400==================================
-# def test_get_items_invalid_limit(create_collections):
+def test_get_items_invalid_limit(create_collections):
     
-#     collection_id = "ships"
-#     resp = requests.get(
-#         f"{HOST}/collections/{collection_id}/items?limit=invalid")
-#     log_request_response("GET items with invalid limit", resp)
-#     assert resp.status_code == 400
+    collection_id = "ships"
+    resp = requests.get(
+        f"{HOST}/collections/{collection_id}/items?limit=invalid")
+    log_request_response("GET items with invalid limit", resp)
+    assert resp.status_code in (400, 422)
 
 
 # #=======================================GET with subTrajectory=true but no datetime should return 400========================================
-# def test_get_items_subtrajectory_without_datetime(create_collections):
+def test_get_items_subtrajectory_without_datetime(create_collections):
     
-#     collection_id = "ships"
-#     resp = requests.get(
-#         f"{HOST}/collections/{collection_id}/items?subTrajectory=true")
-#     log_request_response("GET items with subTrajectory=true without datetime", resp)
-#     assert resp.status_code == 400
+    collection_id = "ships"
+    resp = requests.get(
+        f"{HOST}/collections/{collection_id}/items?subTrajectory=true")
+    log_request_response("GET items with subTrajectory=true without datetime", resp)
+    assert resp.status_code == 400
 
 
 # #================================================GET with subTrajectory=true and datetime interval=============================================
-# def test_get_items_subtrajectory_with_interval(create_collections):
+def test_get_items_subtrajectory_with_interval(create_collections):
     
-#     collection_id = "ships"
-#     interval = urllib.parse.quote("2024-03-01T00:00:00+01/2024-03-01T01:00:00+01") #re check ogc /
-#     resp = requests.get(
-#         f"{HOST}/collections/{collection_id}/items?subTrajectory=true&datetime={interval}")
-#     log_request_response(f"GET items with subTrajectory interval={interval}", resp)
-#     assert resp.status_code == 200
+    collection_id = "ships"
+    interval = urllib.parse.quote("2024-03-01T00:00:00+01/2024-03-01T01:00:00+01") #re check ogc /
+    resp = requests.get(
+        f"{HOST}/collections/{collection_id}/items?subTrajectory=true&datetime={interval}")
+    log_request_response(f"GET items with subTrajectory interval={interval}", resp)
+    assert resp.status_code == 200
 
 
-# #check get mfs
+#check get mfs
 # #==============================================GET with leaf=true should return only the last instant=======================================
-# def test_get_items_leaf(create_collections):
+def test_get_items_leaf(create_collections):
     
-#     collection_id = "ships"
-#     resp = requests.get(f"{HOST}/collections/{collection_id}/items?leaf=true")
-#     log_request_response(f"GET items with leaf=true", resp)
-#     assert resp.status_code == 200
-#     data_resp = resp.json()
+    collection_id = "ships"
+    resp = requests.get(f"{HOST}/collections/{collection_id}/items?leaf=true")
+    log_request_response(f"GET items with leaf=true", resp)
+    assert resp.status_code == 200
+    data_resp = resp.json()
     
-#     for f in data_resp["features"]:
-#         if "temporalGeometry" in f and f["temporalGeometry"]:
-#             tg = f["temporalGeometry"][0]
-#             if "coordinates" in tg and "datetimes" in tg:
-#                 assert len(tg["coordinates"]) == 1
-#                 assert len(tg["datetimes"]) == 1
-#                 assert tg.get("interpolation") == "Discrete"
-#                 #assert it's the last re check
+    for f in data_resp["features"]:
+        if "temporalGeometry" in f and f["temporalGeometry"]:
+            tg = f["temporalGeometry"][0]
+            if "coordinates" in tg and "datetimes" in tg:
+                assert len(tg["coordinates"]) == 1
+                assert len(tg["datetimes"]) == 1
+                assert tg.get("interpolation") == "Discrete"
+                #assert it's the last re check
 
 # #=============================================GET with leaf=true and subTrajectory=true should return 400===============================
-# def test_get_items_leaf_with_subtrajectory(create_collections):
+def test_get_items_leaf_with_subtrajectory(create_collections):
     
-#     collection_id = "ships"
-#     interval = urllib.parse.quote("2024-03-01T00:00:00+01/2024-03-01T01:00:00+01")
-#     resp = requests.get(
-#         f"{HOST}/collections/{collection_id}/items?leaf=true&subTrajectory=true&datetime={interval}")
-#     log_request_response(f"GET items with leaf=true & subTrajectory=true", resp)
-#     assert resp.status_code == 400
+    collection_id = "ships"
+    interval = urllib.parse.quote("2024-03-01T00:00:00+01/2024-03-01T01:00:00+01")
+    resp = requests.get(
+        f"{HOST}/collections/{collection_id}/items?leaf=true&subTrajectory=true&datetime={interval}")
+    log_request_response(f"GET items with leaf=true & subTrajectory=true", resp)
+    assert resp.status_code == 400
 
 
 # #****************************************************SINGLE MOVING FEATURE*************************************************************
 # #============================================GET /collections/{id}/items/{featureId}===================================================
-# def test_get_single_moving_feature(create_collections):
+def test_get_single_moving_feature(create_collections):
    
-#     collection_id = "ships"
-#     feature_id = str(get_feature_by_index(data, 0)["mmsi"])  
-#     resp = requests.get(f"{HOST}/collections/{collection_id}/items/{feature_id}")
+    collection_id = "ships"
+    feature_id = str(get_feature_by_index(data, 0)["mmsi"])  
+    resp = requests.get(f"{HOST}/collections/{collection_id}/items/{feature_id}")
     
-#     print(f"\n=== GET single feature {feature_id} ===")
-#     print(f"==> URL: {resp.url}")
-#     print(f"<== Status: {resp.status_code}") #log req response check not urgent clean
-#     try:
-#         print("Response JSON:", json.dumps(resp.json(), indent=2))
-#     except Exception:
-#         print("Response Text:", resp.text)
-#     print("="*60)
+    print(f"\n=== GET single feature {feature_id} ===")
+    print(f"==> URL: {resp.url}")
+    print(f"<== Status: {resp.status_code}") #log req response check not urgent clean
+    try:
+        print("Response JSON:", json.dumps(resp.json(), indent=2))
+    except Exception:
+        print("Response Text:", resp.text)
+    print("="*60)
 
-#     assert resp.status_code == 200
+    assert resp.status_code == 200
 
-#     feature = resp.json()
-#     assert feature["type"] == "Feature"
-#     assert feature["id"] == feature_id
-#     # assert "geometry" in feature
-#     assert "properties" in feature
-#     assert "links" in feature
+    feature = resp.json()
+    assert feature["type"] == "Feature"
+    assert feature["id"] == feature_id
+    # assert "geometry" in feature
+    assert "properties" in feature
+    assert "links" in feature
     
-#     if feature.get("temporalGeometry"): #check geometry ogc list
-#         assert isinstance(feature["temporalGeometry"], list)
+    if feature.get("temporalGeometry"): #check geometry ogc list
+        assert isinstance(feature["temporalGeometry"], list)
 
 # #================================================DELETE /collections/{id}/items/{featureId}===========================================
-# def test_delete_single_moving_feature(create_collections):
+def test_delete_single_moving_feature(create_collections):
     
-#     collection_id = "ships"
-#     feature_id = str(get_feature_by_index(data, 0)["mmsi"])  # was data[0]["mmsi"]
+    collection_id = "ships"
+    feature_id = str(get_feature_by_index(data, 0)["mmsi"])  # was data[0]["mmsi"]
 
-#     resp = requests.delete(f"{HOST}/collections/{collection_id}/items/{feature_id}")
+    resp = requests.delete(f"{HOST}/collections/{collection_id}/items/{feature_id}")
     
-#     print(f"\n=== DELETE single feature {feature_id} ===")
-#     print(f"→ URL: {resp.url}")
-#     print(f"← Status: {resp.status_code}")
-#     print("="*60)
+    print(f"\n=== DELETE single feature {feature_id} ===")
+    print(f"→ URL: {resp.url}")
+    print(f"← Status: {resp.status_code}")
+    print("="*60)
 
-#     assert resp.status_code in (200, 204)
+    assert resp.status_code in (200, 204)
 
-#     resp_check = requests.get(f"{HOST}/collections/{collection_id}/items/{feature_id}")
-#     assert resp_check.status_code == 404
-#     #assert cascade delete? optional clean
+    resp_check = requests.get(f"{HOST}/collections/{collection_id}/items/{feature_id}")
+    assert resp_check.status_code == 404
+    #assert cascade delete? optional clean
 
 # # ******************************************************TEMPORAL GEOMETRY SEQUENCE ****************************************************
 
