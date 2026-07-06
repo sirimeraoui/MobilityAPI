@@ -9,21 +9,16 @@ from resource.collection.collection_helper import (
 )
 import json
 # clean : use this in collections/retrieve.py?
-def get_collection_id(self, collection_id, connection, cursor):
+def get_collection_id(connection, cursor, collection_id, base_url: str):
     try:
         collection = fetch_collection_by_id(cursor, collection_id)
-        
+
         if not collection:
-            self.handle_error(404, f"Collection '{collection_id}' not found")
-            return
-        
-        base_url = f"http://{self.server.server_name}:{self.server.server_port}"
-        
-        # Build response 
+            raise ValueError(f"Collection '{collection_id}' not found")
+
         response = build_collection_response(collection, base_url)
-        
-        send_json_response(self, 200, response)
-        
-    except Exception as e:
-        print(f"Error in get_collection_id: {e}")
-        self.handle_error(500, f"Internal server error: {str(e)}")
+
+        return response
+
+    except Exception:
+        raise

@@ -1,10 +1,11 @@
 # REQ 8: /req/mf-collection/collection-delete
 # REQU11: /req/mf-collection/collection-delete-success
 
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from fastapi import HTTPException
 
-def delete_collection(self, collection_id, connection, cursor):
+def delete_collection(collection_id, connection, cursor):
     try:
+        # check table exists
         cursor.execute("""
             SELECT EXISTS (
                 SELECT FROM information_schema.tables
@@ -15,31 +16,34 @@ def delete_collection(self, collection_id, connection, cursor):
         table_exists = cursor.fetchone()[0]
 
         if not table_exists:
-            self.handle_error(404, f"Collection '{collection_id}' not found")
-            return
+            raise HTTPException(
+                status_code=404,
+                detail=f"Collection '{collection_id}' not found"
+            )
 
-        # check If exists 
+        # check collection exists
         cursor.execute(
             "SELECT id FROM collections WHERE id = %s",
             (collection_id,)
         )
+
         if not cursor.fetchone():
-            self.handle_error(404, f"Collection '{collection_id}' not found")
-            return
-        #clean recheck ogc
-        # Delete the collection (on cascades deletes moving_features, temporal_geometries...) 
+            raise HTTPException(
+                status_code=404,
+                detail=f"Collection '{collection_id}' not found"
+            )
+
+        # delete
         cursor.execute(
             "DELETE FROM collections WHERE id = %s",
             (collection_id,)
         )
-        
+
         connection.commit()
-        
-        # Delete success 204 no content
-        self.send_response(204)
-        self.end_headers()
-        
+
+        # FastAPI way: return nothing for 204
+        return None
+
     except Exception as e:
         connection.rollback()
-        print(f"Error in delete_collection: {e}")
-        self.handle_error(500, f"Internal server error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))

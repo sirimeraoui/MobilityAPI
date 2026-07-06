@@ -9,23 +9,21 @@ from resource.collection.collection_helper import (
     build_collections_list_response
 )
 
-
-def get_collections(self, connection, cursor):
+def get_collections(connection, cursor, base_url: str):
     try:
         collections_data = fetch_all_collections(cursor)
-        
-        base_url = f"http://{self.server.server_name}:{self.server.server_port}"
+
         collections_list = []
-        
-        # Build each collection resp
+
         for collection in collections_data:
-            collections_list.append(build_collection_response(collection, base_url))
-        
-        #final resp
+            collections_list.append(
+                build_collection_response(collection, base_url)
+            )
+
         response = build_collections_list_response(collections_list, base_url)
-        
-        send_json_response(self, 200, response)
-        
+
+        return response
+
     except Exception as e:
         print(f"Error in get_collections: {e}")
-        self.handle_error(500, f"Internal server error: {str(e)}")
+        raise
