@@ -9,7 +9,6 @@ from resource.temporal_geom_seq.routes import tgeomseq_router
 import psycopg2 
 
 
-
 version = "v1"
 
 description = """
@@ -53,13 +52,14 @@ app.include_router(
 )
 
 app.include_router(
+    tgeomseq_router,
+    prefix=f"{version_prefix}/collections/{{collection_id}}/items/{{mfeature_id}}/tgsequence",
+    tags=["Temporal Geometries"],
+)
+
+app.include_router(
     tproperties_router,
     prefix=f"{version_prefix}/collections/{{collection_id}}/items/{{mfeature_id}}/tproperties",
     tags=["Temporal Properties"],
 )
 
-app.include_router(
-    tgeomseq_router,
-    prefix=f"{version_prefix}/collections/{{collection_id}}/items/{{mfeature_id}}/tgsequence",
-    tags=["Temporal Geometries"],
-)

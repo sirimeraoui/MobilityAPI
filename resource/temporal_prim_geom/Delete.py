@@ -1,11 +1,17 @@
 # REQ 30: /req/movingfeatures/tpgeometry-delete
 # REQ 31: /req/movingfeatures/tpgeometry-delete-success
 
-from utils import send_json_response
+from fastapi import HTTPException
 
 
 # DELETE base/collections/{collectionId}/items/{featureId}/tgsequence/{geometryId}
-def delete_single_temporal_primitive_geo(self, collection_id, feature_id, geometry_id, connection, cursor):
+def delete_single_temporal_primitive_geo(
+    collection_id,
+    feature_id,
+    geometry_id,
+    connection,
+    cursor
+):
     
     try:
         #---------------------------------collection && feature && geomerty exist ??---------------------------------------
@@ -13,18 +19,28 @@ def delete_single_temporal_primitive_geo(self, collection_id, feature_id, geomet
             "SELECT id FROM collections WHERE id = %s",
             (collection_id,)
         )
+
         if cursor.fetchone() is None:
-            self.handle_error(404, f"Collection '{collection_id}' not found")
-            return
+            raise HTTPException(
+                status_code=404,
+                detail=f"Collection '{collection_id}' not found"
+            )
+
+
         #feature exists?
         # addition 14/03 clean
         cursor.execute(
             "SELECT id FROM moving_features WHERE id = %s AND collection_id = %s",
             (feature_id, collection_id)
         )
+
         if cursor.fetchone() is None:
-            self.handle_error(404, f"Feature '{feature_id}' not found")
-            return
+            raise HTTPException(
+                status_code=404,
+                detail=f"Feature '{feature_id}' not found"
+            )
+
+
         # geometry exists (by collection by mf) 
         cursor.execute("""
             SELECT tg.id 
@@ -35,26 +51,41 @@ def delete_single_temporal_primitive_geo(self, collection_id, feature_id, geomet
               AND mf.collection_id = %s
         """, (geometry_id, feature_id, collection_id))
         
+
         if cursor.fetchone() is None:
-            self.handle_error(404, f"Temporal geometry {geometry_id} not found")
-            return
+            raise HTTPException(
+                status_code=404,
+                detail=f"Temporal geometry {geometry_id} not found"
+            )
+
+
         #----------------------------------------------------------------------------------------------------------------------
         # delete
         cursor.execute(
-            """DELETE FROM temporal_geometries tg 
-            WHERE tg.id = %s 
-              AND tg.feature_id = %s 
-              AND tg.collection_id = %s
-        """, (geometry_id, feature_id, collection_id)
+            """DELETE FROM temporal_geometries
+            WHERE id = %s
+              AND feature_id = %s
+              AND collection_id = %s
+            """,
+            (geometry_id, feature_id, collection_id)
         )
         
         connection.commit()
         
         # response Req 31)
-        self.send_response(204)
-        self.end_headers()
-        
+        # FastAPI router handles the 204 response
+        return None
+
+
+    except HTTPException:
+        raise
+
+
     except Exception as e:
         connection.rollback()
         print(f"Error in delete_single_temporal_primitive_geo: {e}", flush=True)
-        self.handle_error(500, f"Internal server error: {str(e)}")
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )

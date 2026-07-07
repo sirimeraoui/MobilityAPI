@@ -638,162 +638,162 @@ def test_delete_single_moving_feature(create_collections):
 # # ******************************************************TEMPORAL GEOMETRY SEQUENCE ****************************************************
 
 # #=================================================GET /collections/{id}/items/{featureId}/tgsequence=================================================
-# def test_get_tgsequence(create_collections):
+def test_get_tgsequence(create_collections):
     
-#     collection_id = "ships"
-#     feature_id = str(get_feature_by_index(data, 0)["mmsi"])  
+    collection_id = "ships"
+    feature_id = str(get_feature_by_index(data, 0)["mmsi"])  
     
-#     resp = requests.get(
-#         f"{HOST}/collections/{collection_id}/items/{feature_id}/tgsequence"
-#     )
+    resp = requests.get(
+        f"{HOST}/collections/{collection_id}/items/{feature_id}/tgsequence"
+    )
     
-#     log_request_response("GET tgsequence", resp)
-#     assert resp.status_code in (200, 404)
+    log_request_response("GET tgsequence", resp)
+    assert resp.status_code in (200, 404)
 
 # # =====================================================TEMPORAL GEOMETRY QUERY TESTS===================================================
 # #======================================Test GET /collections/{id}/items/{fid}/tgsequence/{gid}/distance====================================
-# def test_distance_query(setup_query_test_data):
-#     data = setup_query_test_data
+def test_distance_query(setup_query_test_data):
+    data = setup_query_test_data
 
-#     resp = requests.get(
-#         f"{HOST}/collections/{data['collection_id']}/items/{data['feature_id']}/tgsequence/{data['geometry_id']}/distance"
-#     )
+    resp = requests.get(
+        f"{HOST}/collections/{data['collection_id']}/items/{data['feature_id']}/tgsequence/{data['geometry_id']}/distance"
+    )
 
-#     log_request_response("Distance query", resp)
+    log_request_response("Distance query", resp)
 
-#     assert resp.status_code == 200
+    assert resp.status_code == 200
 
-#     result = resp.json()
+    result = resp.json()
 
-#     assert result["type"] == "TReal"
+    assert result["type"] == "TReal"
 
-#     assert "values" in result
-#     assert isinstance(result["values"], dict)
+    assert "values" in result
+    assert isinstance(result["values"], dict)
 
-#     first_point = result["values"]
+    first_point = result["values"]
 
-#     assert "datetimes" in first_point
-#     assert "values" in first_point
+    assert "datetimes" in first_point
+    assert "values" in first_point
 
-#     assert isinstance(first_point["datetimes"], list)
-#     assert isinstance(first_point["values"], list)
+    assert isinstance(first_point["datetimes"], list)
+    assert isinstance(first_point["values"], list)
 
-#     assert len(first_point["values"]) > 1
+    assert len(first_point["values"]) > 1
 
-#     assert isinstance(first_point["values"][0], (int, float))
+    assert isinstance(first_point["values"][0], (int, float))
 
-#     vals = first_point["values"]
+    vals = first_point["values"]
 
-#     for i in range(1, len(vals)):
-#         assert vals[i] > vals[i - 1]
+    for i in range(1, len(vals)):
+        assert vals[i] > vals[i - 1]
 
-#     assert result["form"] == "meters"
-#     assert result["name"] == "distance"
-#     assert "links" in result
+    assert result["form"] == "meters"
+    assert result["name"] == "distance"
+    assert "links" in result
 
 # #==================================================Test GET /collections/{id}/items/{fid}/tgsequence/{gid}/velocity===================================================================
-# def test_velocity_query(setup_query_test_data):
-#     data = setup_query_test_data
+def test_velocity_query(setup_query_test_data):
+    data = setup_query_test_data
 
-#     resp = requests.get(
-#         f"{HOST}/collections/{data['collection_id']}/items/{data['feature_id']}/tgsequence/{data['geometry_id']}/velocity"
-#     )
+    resp = requests.get(
+        f"{HOST}/collections/{data['collection_id']}/items/{data['feature_id']}/tgsequence/{data['geometry_id']}/velocity"
+    )
 
-#     log_request_response("Velocity query", resp)
+    log_request_response("Velocity query", resp)
 
-#     assert resp.status_code == 200
+    assert resp.status_code == 200
 
-#     result = resp.json()
+    result = resp.json()
 
-#     assert result["type"] == "TReal"
+    assert result["type"] == "TReal"
 
-#     assert "values" in result
-#     assert isinstance(result["values"], dict)
+    assert "values" in result
+    assert isinstance(result["values"], dict)
 
-#     first_point = result["values"]
+    first_point = result["values"]
 
-#     assert "datetimes" in first_point
-#     assert "values" in first_point
+    assert "datetimes" in first_point
+    assert "values" in first_point
 
-#     assert isinstance(first_point["datetimes"], list)
-#     assert isinstance(first_point["values"], list)
+    assert isinstance(first_point["datetimes"], list)
+    assert isinstance(first_point["values"], list)
 
-#     assert len(first_point["values"]) > 1
+    assert len(first_point["values"]) > 1
 
-#     assert isinstance(first_point["values"][0], (int, float))
+    assert isinstance(first_point["values"][0], (int, float))
 
-#     assert result["form"] == "m/s"
-#     assert result["name"] == "velocity"
+    assert result["form"] == "m/s"
+    assert result["name"] == "velocity"
 
-#     assert "links" in result
+    assert "links" in result
 
 # #===========================================Test GET /collections/{id}/items/{fid}/tgsequence/{gid}/acceleration======================================
-# def test_acceleration_query(setup_query_test_data):
-#     data = setup_query_test_data
+def test_acceleration_query(setup_query_test_data):
+    data = setup_query_test_data
 
-#     resp = requests.get(
-#         f"{HOST}/collections/{data['collection_id']}/items/{data['feature_id']}/tgsequence/{data['geometry_id']}/acceleration"
-#     )
+    resp = requests.get(
+        f"{HOST}/collections/{data['collection_id']}/items/{data['feature_id']}/tgsequence/{data['geometry_id']}/acceleration"
+    )
 
-#     log_request_response("Acceleration query", resp)
+    log_request_response("Acceleration query", resp)
 
-#     assert resp.status_code == 200
+    assert resp.status_code == 200
 
-#     result = resp.json()
+    result = resp.json()
 
-#     assert result["type"] == "TReal"
+    assert result["type"] == "TReal"
 
-#     assert "values" in result
-#     assert isinstance(result["values"], dict)
+    assert "values" in result
+    assert isinstance(result["values"], dict)
 
-#     first_point = result["values"]
+    first_point = result["values"]
 
-#     assert "datetimes" in first_point
-#     assert "values" in first_point
+    assert "datetimes" in first_point
+    assert "values" in first_point
 
-#     assert isinstance(first_point["datetimes"], list)
-#     assert isinstance(first_point["values"], list)
+    assert isinstance(first_point["datetimes"], list)
+    assert isinstance(first_point["values"], list)
 
-#     assert len(first_point["values"]) >= 1
+    assert len(first_point["values"]) >= 1
 
-#     assert isinstance(first_point["values"][0], (int, float))
+    assert isinstance(first_point["values"][0], (int, float))
 
-#     assert result["form"] == "m/s²"
-#     assert result["name"] == "acceleration"
+    assert result["form"] == "m/s²"
+    assert result["name"] == "acceleration"
 
-#     assert "links" in result
+    assert "links" in result
 # #======================================================Test query WITH non-existent TEMP geom id======================================
-# def test_query_with_invalid_geometry_id(setup_query_test_data):
+def test_query_with_invalid_geometry_id(setup_query_test_data):
     
-#     data = setup_query_test_data
-#     resp = requests.get(
-#         f"{HOST}/collections/{data['collection_id']}/items/{data['feature_id']}/tgsequence/999999/distance"
-#     )
-#     log_request_response("Invalid temporal geometry id", resp)
+    data = setup_query_test_data
+    resp = requests.get(
+        f"{HOST}/collections/{data['collection_id']}/items/{data['feature_id']}/tgsequence/999999/distance"
+    )
+    log_request_response("Invalid temporal geometry id", resp)
     
-#     assert resp.status_code == 404
+    assert resp.status_code == 404
 
 # #=====================================================Test query with non-existent feature id=========================================
-# def test_query_with_invalid_feature_id(setup_query_test_data):
+def test_query_with_invalid_feature_id(setup_query_test_data):
     
-#     data = setup_query_test_data
-#     resp = requests.get(
-#         f"{HOST}/collections/{data['collection_id']}/items/invalid_feature/tgsequence/{data['geometry_id']}/distance"
-#     )
-#     log_request_response("Invalid feature ID", resp)
+    data = setup_query_test_data
+    resp = requests.get(
+        f"{HOST}/collections/{data['collection_id']}/items/invalid_feature/tgsequence/{data['geometry_id']}/distance"
+    )
+    log_request_response("Invalid feature ID", resp)
     
-#     assert resp.status_code == 404
+    assert resp.status_code == 404
 
 # #======================================================Test query with non-existent collection id=======================================================
-# def test_query_with_invalid_collection_id(setup_query_test_data):
+def test_query_with_invalid_collection_id(setup_query_test_data):
     
-#     data = setup_query_test_data
-#     resp = requests.get(
-#         f"{HOST}/collections/invalid_collection/items/{data['feature_id']}/tgsequence/{data['geometry_id']}/distance"
-#     )
-#     log_request_response("Invalid collection ID", resp)
+    data = setup_query_test_data
+    resp = requests.get(
+        f"{HOST}/collections/invalid_collection/items/{data['feature_id']}/tgsequence/{data['geometry_id']}/distance"
+    )
+    log_request_response("Invalid collection ID", resp)
     
-#     assert resp.status_code == 404
+    assert resp.status_code == 404
 
 
 # #*************************************************************TEMPORAL PROPERTIES TESTS*************************************************************
