@@ -1,61 +1,113 @@
 # REQ 48: /req/movingfeatures/tpvalue-delete
 # REQ 49: /req/movingfeatures/tpvalue-delete-success
 
-from utils import send_json_response
+from fastapi import HTTPException
 import traceback
 
-# DELETE /collecstions/{collectionId}/items/{featureId}/tproperties/{propertyName}/{valueId}
-def delete_temporal_primitive_value(self, collection_id, feature_id, property_name, value_id, connection, cursor):
+
+# DELETE /collections/{collectionId}/items/{featureId}/tproperties/{propertyName}/{valueId}
+def delete_temporal_primitive_value(
+    collection_id,
+    feature_id,
+    property_name,
+    value_id,
+    connection,
+    cursor
+):
 
     try:
+
         # collection exists
         cursor.execute(
             "SELECT id FROM collections WHERE id = %s",
             (collection_id,)
         )
+
         if cursor.fetchone() is None:
-            self.handle_error(404, f"Collection '{collection_id}' not found")
-            return
-        
+            raise HTTPException(
+                status_code=404,
+                detail=f"Collection '{collection_id}' not found"
+            )
+
+
         # feature exists
         cursor.execute(
-            "SELECT id FROM moving_features WHERE id = %s AND collection_id = %s",
+            """
+            SELECT id
+            FROM moving_features
+            WHERE id = %s
+              AND collection_id = %s
+            """,
             (feature_id, collection_id)
         )
+
         if cursor.fetchone() is None:
-            self.handle_error(404, f"Feature '{feature_id}' not found in collection '{collection_id}'")
-            return
-        
-        # Get property id:
-        cursor.execute("""
-            SELECT id FROM temporal_properties
-            WHERE feature_id = %s AND property_name = %s
-        """, (feature_id, property_name))
+            raise HTTPException(
+                status_code=404,
+                detail=f"Feature '{feature_id}' not found in collection '{collection_id}'"
+            )
+
+
+        # Get property id
+        cursor.execute(
+            """
+            SELECT id
+            FROM temporal_properties
+            WHERE feature_id = %s
+              AND property_name = %s
+            """,
+            (feature_id, property_name)
+        )
+
         prop_row = cursor.fetchone()
+
         if prop_row is None:
-            self.handle_error(404, f"Property '{property_name}' not found for feature '{feature_id}'")
-            return
+            raise HTTPException(
+                status_code=404,
+                detail=f"Property '{property_name}' not found for feature '{feature_id}'"
+            )
+
+
         property_id = prop_row[0]
-        
-        #DELETE FROM temporal_values for the property
-        cursor.execute("""
+
+
+        # DELETE temporal value
+        cursor.execute(
+            """
             DELETE FROM temporal_values
-            WHERE id = %s AND property_id = %s
+            WHERE id = %s
+              AND property_id = %s
             RETURNING id
-        """, (value_id, property_id))
-        
+            """,
+            (value_id, property_id)
+        )
+
+
         deleted = cursor.fetchone()
+
         if not deleted:
-            self.handle_error(404, f"Value '{value_id}' not found for property '{property_name}'")
-            return
-        
+            raise HTTPException(
+                status_code=404,
+                detail=f"Value '{value_id}' not found for property '{property_name}'"
+            )
+
+
         connection.commit()
-        
-        #204 delete success
-        self.send_response(204)
-        self.end_headers()
+
+        return None   # FastAPI will return 204
+
+
+    except HTTPException:
+        raise
+
+
     except Exception as e:
         connection.rollback()
-        # print(f"Error in delete TemporalPrimitiveValue: {e}")
-        # traceback.print_exc()
-        self.handle_error(500, f"Internal server error: {str(e)}")
+
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": str(e),
+                "trace": traceback.format_exc()
+            }
+        )
