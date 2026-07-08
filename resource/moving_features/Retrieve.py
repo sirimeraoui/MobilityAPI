@@ -18,7 +18,7 @@ from fastapi import Depends, HTTPException, Query
 from psycopg2.extras import RealDictCursor
 from datetime import datetime
 import json
-from db import get_db
+from db.db import get_db
 
 
 

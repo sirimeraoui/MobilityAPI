@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-
+cd "$(dirname "$0")"
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -171,14 +171,22 @@ run_preprocessing() {
 run_tests() {
     API_PORT=$(get_api_port)
     free_port $API_PORT
+
     echo -e "${YELLOW}Starting server in background on port $API_PORT...${NC}"
-    python server.py &
+
+    fastapi dev &
     SERVER_PID=$!
+
     sleep 5
+
     echo -e "${YELLOW}Running integration tests...${NC}"
-    pytest tests/test_mobility_api.py -v -s
+
+    pytest -v -s tests/fastapitest.py 
+
     TEST_EXIT=$?
-    # kill $SERVER_PID 2>/dev/null || true   # optionally kill server after tests
+
+    kill $SERVER_PID 2>/dev/null || true
+
     exit $TEST_EXIT
 }
 
@@ -201,5 +209,6 @@ else
     API_PORT=$(get_api_port)
     free_port $API_PORT
     echo -e "${GREEN}Starting server on port $API_PORT...${NC}"
-    python server.py
+    # python server.py
+    fastapi dev
 fi

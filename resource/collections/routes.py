@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request, HTTPException
-from db import get_db
+from db.db import get_db
 
 from resource.collections.Retrieve import get_collections as get_collections_service
 from resource.collections.Create import post_collections as post_collections_service

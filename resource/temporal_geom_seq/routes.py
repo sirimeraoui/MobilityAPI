@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from db import get_db
+from db.db import get_db
 
 from resource.temporal_geom_seq.Retrieve import get_tgsequence
 from resource.temporal_geom_seq.Create import post_tgsequence

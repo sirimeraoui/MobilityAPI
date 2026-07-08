@@ -7,7 +7,13 @@ from resource.temporal_geom_seq.routes import tgeomseq_router
 # from .errors import register_all_errors
 # from .middleware import register_middleware
 import psycopg2 
+from contextlib import asynccontextmanager
 
+@asynccontextmanager
+async def life_span(app:FastAPI):
+    print(f"MobilityDB Fastapi starting ...")
+    yield
+    print(f"MobilityDB Fastapi stopped")
 
 version = "v1"
 
@@ -21,7 +27,11 @@ app = FastAPI(
     title="MobilityDB API",
     description=description,
     version=version,
-    license_info={"name": "MIT License", "url": "https://opensource.org/license/mit"},
+    lifespan=life_span,
+    license_info={
+    "name": "PostgreSQL License",
+    "url": "https://github.com/MobilityDB/MobilityAPI-Python/blob/fastapi/LICENSE.txt"
+},
     contact={
         "name": "Sirine AMERAOUI",
         "url": "https://github.com/",

@@ -1,7 +1,7 @@
 from typing import List
 
 from fastapi import APIRouter, Depends, status,Body, Response
-from db import get_db
+from db.db import get_db
 # from sqlmodel.ext.asyncio.session import AsyncSession
 
 # from src.auth.dependencies import AccessTokenBearer, RoleChecker
