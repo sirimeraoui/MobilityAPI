@@ -14,12 +14,6 @@ def post_collection_items(collection_id: str, data: dict, connection,cursor):
 
     conn = connection
     try:
-        object_type = data.get("type")
-        if not object_type:
-            raise HTTPException(
-                status_code=400,
-                detail="Missing mandatory 'type'"
-            )
 
         # Check collection exists
         cursor.execute(
@@ -35,17 +29,11 @@ def post_collection_items(collection_id: str, data: dict, connection,cursor):
 
         created_feature_ids = []
 
-        if object_type == "FeatureCollection":
+        if data["type"] == "FeatureCollection":
 
-            features = data.get("features")
+            # features = data.get("features")
 
-            if not isinstance(features, list):
-                raise HTTPException(
-                    status_code=400,
-                    detail="FeatureCollection missing 'features' array"
-                )
-
-            for feature in features:
+            for feature in data["features"]:
                 feature_id = insert_feature(
                     feature,
                     collection_id,
@@ -56,7 +44,7 @@ def post_collection_items(collection_id: str, data: dict, connection,cursor):
                 if feature_id:
                     created_feature_ids.append(feature_id)
 
-        elif object_type == "Feature":
+        else:
 
             feature_id = insert_feature(
                 data,
@@ -67,12 +55,6 @@ def post_collection_items(collection_id: str, data: dict, connection,cursor):
 
             if feature_id:
                 created_feature_ids.append(feature_id)
-
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid 'type'"
-            )
 
         conn.commit()
 
@@ -105,8 +87,6 @@ def post_collection_items(collection_id: str, data: dict, connection,cursor):
 
 #add single moving feature to moving_features table
 def insert_feature(feature, collection_id, connection, cursor):
-    if feature.get("type") != "Feature":
-        raise Exception("DataError: Invalid feature type")
 
     # generate or use given feature ID
     feat_id = feature.get("id")
@@ -123,7 +103,7 @@ def insert_feature(feature, collection_id, connection, cursor):
     tgeom_mfjson=None
     if temporal_geometry:
         if isinstance(temporal_geometry, dict): 
-            tgeom_mfjson= json.dumps(temporal_geometry)
+            tgeom_mfjson = json.dumps(temporal_geometry)
             
         # elif isinstance(temporal_geometry, str):
         #     print("eeee",flush=True)
@@ -137,113 +117,6 @@ def insert_feature(feature, collection_id, connection, cursor):
     time_range = feature.get("time")
     crs = feature.get("crs")
     trs = feature.get("trs")
-
-# __________________________________________check required tables exist____________________________________________
-    #If moving_features table not exists, then create it
-    #geometry Projective geometry of the moving feature. ? spatial project of temporal geom but one mf can have multiple tem geom????
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS moving_features (
-            id TEXT PRIMARY KEY,
-            collection_id TEXT REFERENCES collections(id) ON DELETE CASCADE,
-            type TEXT DEFAULT 'Feature',
-            properties JSONB,
-            bbox STBOX,
-            time TSTZSPAN,
-            crs JSONB DEFAULT '{"type":"Name","properties":{"name":"urn:ogc:def:crs:OGC:1.3:CRS84"}}'::jsonb,
-            trs JSONB DEFAULT '{"type":"Name","properties":{"name":"urn:ogc:data:time:iso8601"}}'::jsonb,
-            created_at TIMESTAMP DEFAULT NOW()
-        )
-    """)
-    
-    #If temporal_geometries table not exists, then create it
-    #geometry eq trajectry and trajectory eq trip clean
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS temporal_geometries (
-            id SERIAL PRIMARY KEY,
-            feature_id TEXT REFERENCES moving_features(id) ON DELETE CASCADE,
-            collection_id TEXT REFERENCES collections(id) ON DELETE CASCADE,
-            geometry_type TEXT,
-            geometry geometry,
-            trajectory tgeompoint,
-            interpolation TEXT,
-            base JSONB,
-            orientations JSONB,
-            created_at TIMESTAMP DEFAULT NOW()
-        )
-    """)
-    cursor.execute("""
-            CREATE OR REPLACE FUNCTION update_mfeatures_on_tg()
-            RETURNS TRIGGER AS $$
-            DECLARE
-                target_feature_id TEXT;
-                target_collection_id TEXT;
-            BEGIN
-                IF TG_OP = 'DELETE' THEN
-                    target_feature_id := OLD.feature_id;
-                    target_collection_id := OLD.collection_id;
-                ELSE
-                    target_feature_id := NEW.feature_id;
-                    target_collection_id := NEW.collection_id;
-                END IF;
-
-                -- recompute bbox + time for the parent moving feature
-                UPDATE moving_features mf
-                SET
-                    bbox = (
-                        SELECT extent(tg.trajectory)
-                        FROM temporal_geometries tg
-                        WHERE tg.feature_id = target_feature_id
-                        AND tg.collection_id = target_collection_id
-                    ),
-
-                    time = (
-                        SELECT extent(tg.trajectory)::tstzspan
-                        FROM temporal_geometries tg
-                        WHERE tg.feature_id = target_feature_id
-                        AND tg.collection_id = target_collection_id
-                    )
-
-                WHERE mf.id = target_feature_id
-                AND mf.collection_id = target_collection_id;
-
-                RETURN COALESCE(NEW, OLD);
-
-            END;
-            $$ LANGUAGE plpgsql;
-            CREATE OR REPLACE TRIGGER trg_update_mfeatures_on_tg
-            AFTER INSERT OR UPDATE OR DELETE
-            ON temporal_geometries
-            FOR EACH ROW
-            EXECUTE FUNCTION update_mfeatures_on_tg();
-                    """)
-    #If temporal_properties nad temporal_values tables not exists, then create
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS temporal_properties (
-            id SERIAL PRIMARY KEY,
-            feature_id TEXT REFERENCES moving_features(id) ON DELETE CASCADE,
-            property_name TEXT NOT NULL,
-            property_type TEXT NOT NULL,
-            form TEXT,
-            description TEXT,
-            created_at TIMESTAMP DEFAULT NOW()
-        )
-    """)
-    #not temporal type because i can't fix the column to treal timage etc since we can have diff types of properties
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS temporal_values (
-            id SERIAL PRIMARY KEY,
-            property_id INTEGER REFERENCES temporal_properties(id) ON DELETE CASCADE,
-            datetimes TIMESTAMPTZ[] NOT NULL,
-            values JSONB NOT NULL,
-            interpolation TEXT DEFAULT 'Linear',
-            created_at TIMESTAMP DEFAULT NOW()
-        )
-    """)
-    
-    
-    connection.commit()
-#___________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
-
 
     srid = 4326 #world,
     if crs and isinstance(crs, dict):
@@ -289,9 +162,9 @@ def insert_feature(feature, collection_id, connection, cursor):
 
     # INSERT INTO temporal_geometries: If the create feature has a temporal_geom, then add to temporal_geometries table    
     #RE CHECK OGC (must the uiser always provide the temporal geom unsure 40 percent)
-    base = temporal_geometry.get("base",None)
+    
     if inserted and tgeom_mfjson:
-
+        base = temporal_geometry.get("base",None)
         geometry_type = "MovingPoint"  # Default 
         if temporal_geometry and isinstance(temporal_geometry, dict):
             geometry_type = temporal_geometry.get("type", "MovingPoint") #get geom_type of not default MovingPoint

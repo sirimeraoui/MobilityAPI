@@ -1,11 +1,15 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, status,Body, Response
+from fastapi import APIRouter, Depends, status, Response
 from db.db import get_db
 # from sqlmodel.ext.asyncio.session import AsyncSession
 
-# from src.auth.dependencies import AccessTokenBearer, RoleChecker
-
+# ite 2 
+from resource.moving_features.models import (
+    MovingFeatureCreateRequest,
+    MovingFeatureResponse,
+    MovingFeatureCollectionResponse,
+)
 # from src.db.main import get_session
 from resource.moving_features.Retrieve import get_collection_items
 from resource.moving_features.Create import post_collection_items
@@ -20,7 +24,7 @@ from resource.moving_feature.Delete import delete_single_moving_feature
 mfeatures_router = APIRouter()
 
 
-@mfeatures_router.get("")
+@mfeatures_router.get( "",response_model=MovingFeatureCollectionResponse)
 async def retrieve_collection_items(
     collection_id: str,
     limit: int = 10,
@@ -30,8 +34,6 @@ async def retrieve_collection_items(
     leaf: bool = False,
     db=Depends(get_db),
 ):
-    connection, cursor = db
-
     return await get_collection_items(
         collection_id=collection_id,
         db=db,
@@ -42,24 +44,22 @@ async def retrieve_collection_items(
         leaf=leaf,
     )
 
-
 @mfeatures_router.post("", status_code=status.HTTP_201_CREATED)
 async def create_collection_items(
     collection_id: str,
-    data: dict = Body(...),
+    payload: MovingFeatureCreateRequest,
     db=Depends(get_db),
 ):
     connection, cursor = db
 
     return post_collection_items(
         collection_id=collection_id,
-        data=data,
+        data=payload.model_dump(exclude_none=True),
         connection=connection,
         cursor=cursor,
     )
 
-
-@mfeatures_router.get("/{mfeature_id}")
+@mfeatures_router.get("/{mfeature_id}",response_model=MovingFeatureResponse)
 async def get_moving_feature(
     collection_id: str,
     mfeature_id: str,

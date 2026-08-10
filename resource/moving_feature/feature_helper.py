@@ -1,8 +1,7 @@
 import json 
 from datetime import datetime
-
 import re
-from datetime import datetime
+
 def build_feature_from_row(row, collection_id, include_temporal=True, single=False):
     cleaned = re.findall(r"[-+]?\d*\.\d+|\d+", str(row[4])) if not single else re.findall(r"[-+]?\d*\.\d+|\d+", str(row[3])) 
 
