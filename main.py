@@ -9,9 +9,13 @@ from resource.temporal_geom_seq.routes import tgeomseq_router
 import psycopg2 
 from contextlib import asynccontextmanager
 
+from db.db import init_db
+
 @asynccontextmanager
 async def life_span(app:FastAPI):
     print(f"MobilityDB Fastapi starting ...")
+    # initalise the db schema
+    init_db()
     yield
     print(f"MobilityDB Fastapi stopped")
 

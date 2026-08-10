@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from db.db import get_db
-
+from fastapi import HTTPException, Response
 from resource.temporal_geom_seq.Retrieve import get_tgsequence
 from resource.temporal_geom_seq.Create import post_tgsequence
 from resource.temporal_prim_geom.Delete import delete_single_temporal_primitive_geo
@@ -8,7 +8,7 @@ from resource.temporal_prim_geom.Delete import delete_single_temporal_primitive_
 from resource.temporal_geom_query.distance import get_distance
 from resource.temporal_geom_query.velocity import get_velocity
 from resource.temporal_geom_query.acceleration import get_acceleration
-
+from fastapi import APIRouter, Depends, Response, Body
 
 tgeomseq_router = APIRouter()
 
@@ -33,15 +33,19 @@ async def get_tgsequence_route(
 async def post_tgsequence_route(
     collection_id: str,
     mfeature_id: str,
-    db=Depends(get_db)
+    response: Response,
+    db=Depends(get_db),
+    data: dict = Body(...),
 ):
     connection, cursor = db
 
-    return post_tgsequence(
+    return await post_tgsequence(
         collection_id,
         mfeature_id,
+        response,
         connection,
-        cursor
+        cursor,
+        data=data,
     )
 
 

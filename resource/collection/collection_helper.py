@@ -111,38 +111,39 @@ def fetch_all_collections(cursor):
 
 
 ####################################################"Create and Replace helpers"
-def validate_collection_data(data, is_update=False):
-    errors = []
-    validated = {}
-    #if create aka post: operation
-    if not is_update:
-        # Post: Title mandatory:
-        if "title" not in data:
-            errors.append("Missing required field: title")
-        else:
-            validated["title"] = data["title"] 
-            validated["id"] = data["title"].lower().replace(" ", "_")
-    else: # Replace aka Put operation:
-        if "title" in data:
-            validated["title"] = data["title"]
+# replaced by fastpia basemodel to be cleaned after tests
+# def validate_collection_data(data, is_update=False):
+#     errors = []
+#     validated = {}
+#     #if create aka post: operation
+#     if not is_update:
+#         # Post: Title mandatory:
+#         if "title" not in data:
+#             errors.append("Missing required field: title")
+#         else:
+#             validated["title"] = data["title"] 
+#             validated["id"] = data["title"].lower().replace(" ", "_")
+#     else: # Replace aka Put operation:
+#         if "title" in data:
+#             validated["title"] = data["title"]
     
-    # Optional fields for POST AND PUT COLLECTION
-    if "description" in data:
-        validated["description"] = data["description"]
+#     # Optional fields for POST AND PUT COLLECTION
+#     if "description" in data:
+#         validated["description"] = data["description"]
     
-    if "itemType" in data:#PUT
-        if data["itemType"] != "movingfeature":
-            errors.append("itemType must be 'movingfeature'")
-        validated["itemType"] = data["itemType"]
-    elif not is_update:#POST
-        validated["itemType"] = "movingfeature"
+#     if "itemType" in data:#PUT
+#         if data["itemType"] != "movingfeature":
+#             errors.append("itemType must be 'movingfeature'")
+#         validated["itemType"] = data["itemType"]
+#     elif not is_update:#POST
+#         validated["itemType"] = "movingfeature"
     
-    if "updateFrequency" in data and not is_update:
-        # updateFrequency can be set only for POST,  can't be replaced:
-        validated["updateFrequency"] = data["updateFrequency"]
+#     if "updateFrequency" in data and not is_update:
+#         # updateFrequency can be set only for POST,  can't be replaced:
+#         validated["updateFrequency"] = data["updateFrequency"]
     
 
-    return errors, validated
+#     return errors, validated
 
 # Check collection existance by ID:
 def collection_exists(cursor, collection_id):
@@ -172,7 +173,7 @@ def insert_collection(cursor, collection_id, data):
 def update_collection(cursor, collection_id, data):
     updates = []
     values = []
-    
+
     if "title" in data:
         updates.append("title = %s")
         values.append(data["title"])
@@ -182,14 +183,21 @@ def update_collection(cursor, collection_id, data):
     if "itemType" in data:
         updates.append("item_type = %s")
         values.append(data["itemType"])
+
+    if not updates:
+        return False
+
     updates.append("updated_at = NOW()")
-    
-    if updates:
-        values.append(collection_id)
-        cursor.execute(f"""
-            UPDATE collections 
-            SET {', '.join(updates)} 
-            WHERE id = %s
-        """, values)
-        return True
-    return False
+
+    values.append(collection_id)
+
+    cursor.execute(
+        f"""
+        UPDATE collections
+        SET {', '.join(updates)}
+        WHERE id = %s
+        """,
+        values,
+    )
+
+    return True

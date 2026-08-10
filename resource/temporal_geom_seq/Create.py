@@ -10,10 +10,10 @@ import traceback
 async def post_tgsequence(
     collection_id: str,
     feature_id: str,
-    data: dict,
     response: Response,
     connection,
-    cursor
+    cursor,
+    data: dict
 ):
 
     try:
