@@ -8,12 +8,19 @@ from resource.temporal_prim_geom.Delete import delete_single_temporal_primitive_
 from resource.temporal_geom_query.distance import get_distance
 from resource.temporal_geom_query.velocity import get_velocity
 from resource.temporal_geom_query.acceleration import get_acceleration
-from fastapi import APIRouter, Depends, Response, Body
+from fastapi import APIRouter, Depends, Response
 
+
+# it2
+from resource.temporal_geom_seq.models import (
+    TemporalGeometryCreate,
+    TemporalGeometrySequenceResponse,
+)
+from resource.temporal_geom_query.models import TemporalGeometryQueryResponse
 tgeomseq_router = APIRouter()
 
 
-@tgeomseq_router.get("")
+@tgeomseq_router.get("",response_model=TemporalGeometrySequenceResponse,)
 async def get_tgsequence_route(
     collection_id: str,
     mfeature_id: str,
@@ -34,8 +41,8 @@ async def post_tgsequence_route(
     collection_id: str,
     mfeature_id: str,
     response: Response,
+    payload: TemporalGeometryCreate,
     db=Depends(get_db),
-    data: dict = Body(...),
 ):
     connection, cursor = db
 
@@ -45,9 +52,8 @@ async def post_tgsequence_route(
         response,
         connection,
         cursor,
-        data=data,
+        data=payload.model_dump(),
     )
-
 
 @tgeomseq_router.delete("/{tgeometry_id}", status_code=204)
 async def delete_tgsequence_item(
@@ -71,7 +77,10 @@ async def delete_tgsequence_item(
 # TEMPORAL GEOMETRY QUERY
 # ==========================================================
 
-@tgeomseq_router.get("/{tgeometry_id}/distance")
+@tgeomseq_router.get(
+    "/{tgeometry_id}/distance",
+    response_model=TemporalGeometryQueryResponse,
+)
 async def get_tgsequence_distance(
     collection_id: str,
     mfeature_id: str,
@@ -89,7 +98,10 @@ async def get_tgsequence_distance(
     )
 
 
-@tgeomseq_router.get("/{tgeometry_id}/velocity")
+@tgeomseq_router.get(
+    "/{tgeometry_id}/velocity",
+    response_model=TemporalGeometryQueryResponse,
+)
 async def get_tgsequence_velocity(
     collection_id: str,
     mfeature_id: str,
@@ -106,8 +118,10 @@ async def get_tgsequence_velocity(
         cursor
     )
 
-
-@tgeomseq_router.get("/{tgeometry_id}/acceleration")
+@tgeomseq_router.get(
+    "/{tgeometry_id}/acceleration",
+    response_model=TemporalGeometryQueryResponse,
+)
 async def get_tgsequence_acceleration(
     collection_id: str,
     mfeature_id: str,
@@ -115,7 +129,6 @@ async def get_tgsequence_acceleration(
     db=Depends(get_db)
 ):
     connection, cursor = db
-#async here isn't effective but will be worth it with asyncpg - clean
     return await get_acceleration(
         collection_id,
         mfeature_id,

@@ -5,7 +5,6 @@ from fastapi import HTTPException, Response
 import re
 import traceback
 
-
 # POST base/collections/{collectionId}/items/{featureId}/tgsequence
 async def post_tgsequence(
     collection_id: str,
@@ -85,12 +84,12 @@ async def post_tgsequence(
         values = [
             feature_id,
             collection_id,
-            data.get("type", "MovingPoint"),
+            data["type"],
             tgeom_mfjson,
             srid,
             tgeom_mfjson,
             srid,
-            data.get("interpolation", "Linear"),
+            data["interpolation"],
         ]
 
         if data.get("base") is not None:

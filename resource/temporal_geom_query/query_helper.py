@@ -21,6 +21,6 @@ def build_query_response(values, unit, query_type, base_url, path):
     }
 
 class QueryDescription(Enum):
-    distance="a graph of the time to distance function as a form of the TemporalProperty.",
-    velocity = "a graph of the time to velocity function as a form of the TemporalProperty.",
+    distance="a graph of the time to distance function as a form of the TemporalProperty."
+    velocity = "a graph of the time to velocity function as a form of the TemporalProperty."
     acceleration = "a graph of the time to acceleration function as a form of the TemporalProperty."
