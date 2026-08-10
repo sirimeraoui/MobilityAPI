@@ -1,12 +1,10 @@
 # REQ 2: /req/mf-collection/collections-post
 # REQ 4: /req/mf-collection/collections-post-success
 
-from resource.collection.collection_helper import (
-    collection_exists,
-    insert_collection
-)
+from sqlalchemy.ext.asyncio import AsyncSession
+from db.schemas.collection import Collection
 
-def post_collections(connection, cursor, data_dict, base_url):
+async def post_collections(session: AsyncSession,data_dict: dict,base_url: str):
     try:
         # Attribute data validation
         validated_data = data_dict.copy()
@@ -18,13 +16,30 @@ def post_collections(connection, cursor, data_dict, base_url):
         )
 
         # check existence
-        if collection_exists(cursor, collection_id):
-            raise ValueError(f'Collection "{validated_data.get("title")}" already exists.')
+        existing_collection = await session.get(Collection,
+            collection_id,
+        )
 
-        insert_collection(cursor, collection_id, validated_data)
-        connection.commit()
+        if existing_collection is not None:
+            raise ValueError(
+                f'Collection "{validated_data.get("title")}" already exists.'
+            )
 
-        # response payload (no HTTP here)
+        collection = Collection(
+            id=collection_id,
+            title=validated_data["title"],
+            description=validated_data.get("description"),
+            update_frequency=validated_data.get("updateFrequency"),
+            item_type=validated_data.get(
+                "itemType",
+                "movingfeature",
+            ),
+        )
+
+        session.add(collection)
+        await session.commit()
+
+
         collection_data = {
             "id": collection_id,
             "title": validated_data.get("title"),
@@ -36,5 +51,5 @@ def post_collections(connection, cursor, data_dict, base_url):
         return collection_id, collection_data
 
     except Exception:
-        connection.rollback()
+        await session.rollback()
         raise

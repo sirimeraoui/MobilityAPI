@@ -1,49 +1,32 @@
 # REQ 8: /req/mf-collection/collection-delete
 # REQU11: /req/mf-collection/collection-delete-success
 
+from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
-
-def delete_collection(collection_id, connection, cursor):
+from db.schemas.collection import Collection
+async def delete_collection(collection_id, session):
     try:
-        # check table exists
-        cursor.execute("""
-            SELECT EXISTS (
-                SELECT FROM information_schema.tables
-                WHERE table_name = 'collections'
-            )
-        """)
 
-        table_exists = cursor.fetchone()[0]
 
-        if not table_exists:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Collection '{collection_id}' not found"
-            )
 
         # check collection exists
-        cursor.execute(
-            "SELECT id FROM collections WHERE id = %s",
-            (collection_id,)
+        collection = await session.get(
+            Collection,
+            collection_id,
         )
 
-        if not cursor.fetchone():
+        if not collection:
             raise HTTPException(
                 status_code=404,
                 detail=f"Collection '{collection_id}' not found"
             )
 
         # delete
-        cursor.execute(
-            "DELETE FROM collections WHERE id = %s",
-            (collection_id,)
-        )
-
-        connection.commit()
-
-        # FastAPI way: return nothing for 204
+        await session.delete(collection)
+        await session.commit()
+      
         return None
 
     except Exception as e:
-        connection.rollback()
+        await session.rollback()
         raise HTTPException(status_code=500, detail=str(e))

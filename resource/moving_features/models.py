@@ -2,6 +2,10 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 from resource.common.models import LinkResponse
+from resource.temporal_geom_seq.models import (
+    TemporalGeometryCreate,
+    TemporalGeometryItemResponse
+)
 
 class MovingFeatureCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -11,7 +15,7 @@ class MovingFeatureCreate(BaseModel):
 
     properties: dict[str, Any] = Field(default_factory=dict)
 
-    temporalGeometry: dict[str, Any] | None = None
+    temporalGeometry: TemporalGeometryCreate | None = None
     temporalProperties: list[dict[str, Any]] | None = None
 
     time: Any | None = None
@@ -35,16 +39,6 @@ MovingFeatureCreateRequest = Annotated[
 
 # ---------------------------------------response models
 
-class TemporalGeometryResponse(BaseModel):
-    id: int | str
-    type: str
-    datetimes: list[str] = Field(default_factory=list)
-    coordinates: list[Any] = Field(default_factory=list)
-    interpolation: str | None = None
-    base: Any | None = None
-
-
-
 class MovingFeatureBaseResponse(BaseModel):
     type: Literal["Feature"]
     id: str
@@ -60,12 +54,12 @@ class MovingFeatureBaseResponse(BaseModel):
 
 
 class MovingFeatureResponse(MovingFeatureBaseResponse):
-    temporalGeometry: list[TemporalGeometryResponse] | None = None
+    temporalGeometry: list[TemporalGeometryItemResponse] | None = None
 
 
 class MovingFeatureListItemResponse(MovingFeatureBaseResponse):
     geometry: list[dict[str, Any]] = Field(default_factory=list)
-    temporalGeometry: list[TemporalGeometryResponse] = Field(
+    temporalGeometry: list[TemporalGeometryItemResponse] = Field(
         default_factory=list
     )
 

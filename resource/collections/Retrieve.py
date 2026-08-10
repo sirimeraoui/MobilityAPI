@@ -5,10 +5,13 @@ from resource.collection.collection_helper import (
     build_collection_response,
     build_collections_list_response
 )
+from sqlalchemy.ext.asyncio import AsyncSession
+from db.schemas.collection import Collection
 
-def get_collections(connection, cursor, base_url: str):
+async def get_collections(session, base_url: str):
     try:
-        collections_data = fetch_all_collections(cursor)
+
+        collections_data = await fetch_all_collections(session)
 
         collections_list = []
 

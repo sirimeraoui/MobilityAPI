@@ -1,7 +1,8 @@
 import psycopg2
 from config import Config
 # from sqlmodel import create_engine, text
-# from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import create_async_engine,async_sessionmaker,AsyncSession
 
 def get_db():
     conn = psycopg2.connect(
@@ -18,21 +19,33 @@ def get_db():
     finally:
         cursor.close()
         conn.close()
+# :::::::::::::::::::::::::::ite3
+
+DATABASE_URL = (
+    f"postgresql+asyncpg://"
+    f"{Config.DB_USER}:{Config.PASSWORD}"
+    f"@{Config.HOST}:{Config.PORT}/{Config.DB}"
+)
+
+async_engine = create_async_engine(
+    DATABASE_URL,
+    echo=False,
+)
+AsyncSessionLocal = async_sessionmaker(
+    bind=async_engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+)
 
 
-def init_db():
-    conn = psycopg2.connect(
-        host=Config.HOST,
-        port=Config.PORT,
-        database=Config.DB,
-        user=Config.DB_USER,
-        password=Config.PASSWORD
-    )
-    cursor = conn.cursor()
+async def get_async_db():
+    async with AsyncSessionLocal() as session:
+        yield session
 
-    try:
-        # create tables if not exist
-        cursor.execute("""
+async def init_db():
+    async with async_engine.begin() as conn:
+    # create tables if not exist
+        await conn.execute(text("""
             CREATE TABLE IF NOT EXISTS collections (
                 id TEXT PRIMARY KEY,
                 title TEXT NOT NULL,
@@ -42,9 +55,9 @@ def init_db():
                 created_at TIMESTAMP DEFAULT NOW(),
                 updated_at TIMESTAMP DEFAULT NOW()
             )
-        """)
+        """))
 
-        cursor.execute("""
+        await conn.execute(text("""
             CREATE TABLE IF NOT EXISTS moving_features (
                 id TEXT PRIMARY KEY,
                 collection_id TEXT REFERENCES collections(id) ON DELETE CASCADE,
@@ -57,9 +70,9 @@ def init_db():
                 created_at TIMESTAMP DEFAULT NOW(),
                 updated_at TIMESTAMP DEFAULT NOW()
             )
-        """)
+        """))
 
-        cursor.execute("""
+        await conn.execute(text("""
             CREATE TABLE IF NOT EXISTS temporal_geometries (
                 id SERIAL PRIMARY KEY,
                 feature_id TEXT REFERENCES moving_features(id) ON DELETE CASCADE,
@@ -73,9 +86,9 @@ def init_db():
                 created_at TIMESTAMP DEFAULT NOW(),
                 updated_at TIMESTAMP DEFAULT NOW()
             )
-        """)
+        """))
             #If temporal_properties nad temporal_values tables not exists, then create
-        cursor.execute("""
+        await conn.execute(text("""
             CREATE TABLE IF NOT EXISTS temporal_properties (
                 id SERIAL PRIMARY KEY,
                 feature_id TEXT REFERENCES moving_features(id) ON DELETE CASCADE,
@@ -86,9 +99,9 @@ def init_db():
                 created_at TIMESTAMP DEFAULT NOW(),
                 updated_at TIMESTAMP DEFAULT NOW()
             )
-        """)
+        """))
         #not temporal type because i can't fix the column to treal timage etc since we can have diff types of properties
-        cursor.execute("""
+        await conn.execute(text("""
             CREATE TABLE IF NOT EXISTS temporal_values (
                 id SERIAL PRIMARY KEY,
                 property_id INTEGER REFERENCES temporal_properties(id) ON DELETE CASCADE,
@@ -98,10 +111,10 @@ def init_db():
                 created_at TIMESTAMP DEFAULT NOW(),
                 updated_at TIMESTAMP DEFAULT NOW()
             )
-        """)
+        """))
 
 
-        cursor.execute("""
+        await conn.execute(text("""
             CREATE OR REPLACE FUNCTION update_mfeatures_on_tg()
             RETURNS TRIGGER AS $$
             DECLARE
@@ -140,32 +153,12 @@ def init_db():
 
             END;
             $$ LANGUAGE plpgsql;
+                """))
+
+        await conn.execute(text("""
             CREATE OR REPLACE TRIGGER trg_update_mfeatures_on_tg
             AFTER INSERT OR UPDATE OR DELETE
             ON temporal_geometries
             FOR EACH ROW
             EXECUTE FUNCTION update_mfeatures_on_tg();
-                    """)
-
-        conn.commit()
-
-    except Exception:
-        conn.rollback()
-        raise
-
-    finally:
-        cursor.close()
-        conn.close()
-
-
-# engine = AsyncEngine(
-#     create_engine(
-
-#     )
-# )
-
-# async def init_db():
-#     async with engine.begin() as conn:
-#         statement = text("the initia table creation s here ")
-#         result= await conn.execute(statement)
-#         print(result.all())
+        """))

@@ -1,4 +1,7 @@
 import re
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+
 def build_collection_response(collection, base_url):
     print(collection['extent_period'])
 
@@ -78,32 +81,47 @@ def fetch_collection_by_id(cursor, collection_id):
     return dict(zip(columns, row))
 
 
-def fetch_all_collections(cursor):
-    cursor.execute("""
-        SELECT c.id, c.title, c.description, c.update_frequency, c.item_type,
-            extent(tg.trajectory) AS extent,
-            extent(tg.trajectory)::tstzspan AS extent_period,
-            ( SELECT mf.crs FROM moving_features mf WHERE mf.collection_id = c.id LIMIT 1
-            ) AS crs,
 
-            (SELECT mf.trs FROM moving_features mf WHERE mf.collection_id = c.id LIMIT 1
-            ) AS trs
+async def fetch_all_collections(session: AsyncSession):
 
-        FROM collections c
-        LEFT JOIN temporal_geometries tg ON tg.collection_id = c.id
-        GROUP BY c.id, c.title
-        ORDER BY c.created_at DESC;
-    """)
-    
+    result = await session.execute(
+        text("""
+            SELECT
+                c.id,
+                c.title,
+                c.description,
+                c.update_frequency,
+                c.item_type,
 
-    rows = cursor.fetchall()
-    columns = [desc[0] for desc in cursor.description]
-    #CONSTRUCT THE collections dict
-    collections = []
-    for row in rows:
-        collections.append(dict(zip(columns, row)))
-    
-    return collections
+                extent(tg.trajectory) AS extent,
+                extent(tg.trajectory)::tstzspan AS extent_period,
+
+                (
+                    SELECT mf.crs
+                    FROM moving_features mf
+                    WHERE mf.collection_id = c.id
+                    LIMIT 1
+                ) AS crs,
+
+                (
+                    SELECT mf.trs
+                    FROM moving_features mf
+                    WHERE mf.collection_id = c.id
+                    LIMIT 1
+                ) AS trs
+
+            FROM collections c
+
+            LEFT JOIN temporal_geometries tg
+                ON tg.collection_id = c.id
+
+            GROUP BY c.id, c.title
+
+            ORDER BY c.created_at DESC
+        """)
+    )
+
+    return result.mappings().all()
 
 
 

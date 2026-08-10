@@ -3,11 +3,9 @@ import requests
 import json
 from pymeos import *
 import urllib.parse
-import time
 import pandas as pd
 import ijson
 import os
-# HOST = "http://localhost:8080/api/v1"
 HOST = "http://127.0.0.1:8000/api/v1"
 # pymeos_initialize()
 

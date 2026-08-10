@@ -2,21 +2,36 @@
 # RE10: /req/mf-collection/collection-put-success
 import json
 from fastapi import HTTPException
-from resource.collection.collection_helper import (
-    collection_exists,
-    update_collection
-)
+from sqlalchemy.ext.asyncio import AsyncSession
+from db.schemas.collection import Collection
+from datetime import datetime, timezone
 
-def put_collection(collection_id, data_dict, connection, cursor):
+
+
+async def put_collection(collection_id, data_dict, session: AsyncSession):
     try:
         # Check if collection exists
-        if not collection_exists(cursor, collection_id):
-            raise ValueError(f"Collection '{collection_id}' not found")
-
+        collection = await session.get(
+            Collection,
+            collection_id,
+        )
+        if collection is None:
+            raise ValueError(
+                f"Collection '{collection_id}' not found"
+            )
 
         # update DB
-        update_collection(cursor, collection_id, data_dict)
-        connection.commit()
+        if "title" in data_dict:
+            collection.title = data_dict["title"]
+
+        if "description" in data_dict:
+            collection.description = data_dict["description"]
+
+        if "itemType" in data_dict:
+            collection.item_type = data_dict["itemType"]
+
+        collection.updated_at = datetime.utcnow()
+        await session.commit()
 
         return True
 
@@ -24,5 +39,5 @@ def put_collection(collection_id, data_dict, connection, cursor):
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
     except Exception as e:
-        connection.rollback()
-        raise e
+        await session.rollback()
+        raise 

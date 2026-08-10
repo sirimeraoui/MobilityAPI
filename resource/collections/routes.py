@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Request, HTTPException
-from db.db import get_db
+from db.db import get_db, get_async_db
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from resource.collections.Retrieve import get_collections as get_collections_service
 from resource.collections.Create import post_collections as post_collections_service
@@ -19,17 +20,15 @@ collections_router = APIRouter()
 
 
 @collections_router.post("", status_code=201)
-def post_collections_route(
+async def post_collections_route(
     payload: CollectionCreate,
     request: Request,
-    db=Depends(get_db),
+    session: AsyncSession = Depends(get_async_db)
 ):
-    conn, cursor = db
 
     try:
-        collection_id, collection_data = post_collections_service(
-            conn,
-            cursor,
+        collection_id, collection_data = await post_collections_service(
+            session,
             payload.model_dump(),
             base_url=str(request.base_url).rstrip("/")
         )
@@ -51,25 +50,21 @@ def post_collections_route(
 
 
 @collections_router.get("",response_model=CollectionsResponse)
-def get_collections_route(request: Request,db=Depends(get_db)):
-
-    conn, cursor = db
+async def get_collections_route(request: Request,session: AsyncSession=Depends(get_async_db)):
     base_url = str(request.base_url).rstrip("/")
-    return get_collections_service(conn,cursor,base_url)
-
+    return await get_collections_service(session,base_url)
 
 
 
 @collections_router.get("/{collection_id}",response_model=CollectionResponse,)
-def get_collection_route(collection_id: str,
+async def get_collection_route(collection_id: str,
     request: Request,
-    db=Depends(get_db),
+    session:AsyncSession = Depends(get_async_db)
 ):
-    conn, cursor = db
 
     try:
         base_url = str(request.base_url).rstrip("/")
-        return get_collection_id(conn,cursor,collection_id,base_url)
+        return await get_collection_id(session,collection_id,base_url)
 
     except ValueError as e:
         raise HTTPException(
@@ -83,21 +78,18 @@ def get_collection_route(collection_id: str,
             detail=str(e))
         
 @collections_router.put("/{collection_id}", status_code=204)
-def put_collection_route(
+async def put_collection_route(
     collection_id: str,
     payload: CollectionReplace,
-    db=Depends(get_db),
+    session: AsyncSession = Depends(get_async_db)
 ):
-    conn, cursor = db
-
     try:
         data_dict = payload.model_dump(exclude_unset=True)
 
-        put_collection(
+        await put_collection(
             collection_id,
             data_dict,
-            conn,
-            cursor,
+            session 
         )
 
         return None
@@ -113,11 +105,10 @@ def put_collection_route(
 
 
 @collections_router.delete("/{collection_id}", status_code=204)
-def delete_collection_route(collection_id: str, db=Depends(get_db)):
-    conn, cursor = db
+async def delete_collection_route(collection_id: str, session:AsyncSession=Depends(get_async_db)):
 
     try:
-        delete_collection(collection_id, conn, cursor)
+        await delete_collection(collection_id, session)
         return None
 
     except HTTPException as e:

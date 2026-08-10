@@ -15,7 +15,7 @@ from db.db import init_db
 async def life_span(app:FastAPI):
     print(f"MobilityDB Fastapi starting ...")
     # initalise the db schema
-    init_db()
+    await init_db()
     yield
     print(f"MobilityDB Fastapi stopped")
 
