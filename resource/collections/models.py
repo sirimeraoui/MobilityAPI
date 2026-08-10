@@ -1,9 +1,8 @@
 # resource/collections/models.py
 
 from typing import Literal,Any
-
 from pydantic import BaseModel, ConfigDict
-
+from resource.common.models import LinkResponse
 
 class CollectionCreate(BaseModel):
     # for safety, no additional input is allowed, if the OGC MF changes
@@ -24,12 +23,6 @@ class CollectionReplace(BaseModel):
 
 
     # ----------------------------------responses
-
-class LinkResponse(BaseModel):
-    href: str
-    rel: str
-    type: str | None = None
-
 class SpatialExtentResponse(BaseModel):
     bbox: list[float]
     crs: Any | None = None

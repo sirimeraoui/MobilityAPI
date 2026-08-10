@@ -1,7 +1,7 @@
 from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
-
+from resource.common.models import LinkResponse
 
 class MovingFeatureCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -34,12 +34,6 @@ MovingFeatureCreateRequest = Annotated[
 
 
 # ---------------------------------------response models
-#  common
-class LinkResponse(BaseModel):
-    href: str
-    rel: str
-    type: str
-
 
 class TemporalGeometryResponse(BaseModel):
     id: int | str

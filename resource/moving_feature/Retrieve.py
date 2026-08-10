@@ -1,10 +1,6 @@
 # REQ 19: /req/movingfeatures/mf-get
 # REQ 21: /req/movingfeatures/mf-get-success
-
-from http.server import BaseHTTPRequestHandler, HTTPServer
-from utils import send_json_response
 from resource.moving_feature.feature_helper import build_feature_from_row
-import json
 import traceback
 from fastapi import HTTPException
 

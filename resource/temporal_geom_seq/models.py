@@ -1,6 +1,6 @@
 from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict
-
+from resource.common.models import LinkResponse
 
 
 class TemporalGeometryCreate(BaseModel):
@@ -25,13 +25,6 @@ class TemporalGeometryItemResponse(BaseModel):
     coordinates: list[list[float]]
     interpolation: str | None = None
     base: Any | None = None
-
-
-class LinkResponse(BaseModel):
-    href: str
-    rel: str
-    type: str
-
 
 class TemporalGeometrySequenceResponse(BaseModel):
     type: Literal["TemporalGeometrySequence"]

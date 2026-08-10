@@ -1,5 +1,3 @@
-from utils import send_json_response
-import json
 import re
 def build_collection_response(collection, base_url):
     print(collection['extent_period'])

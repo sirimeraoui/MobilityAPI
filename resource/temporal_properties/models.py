@@ -1,6 +1,6 @@
 from typing import Any, Literal
 from pydantic import (BaseModel,ConfigDict,model_validator)
-
+from resource.common.models import LinkResponse
 
 PropertyType = Literal["TBoolean","TText","TInteger","TReal","TImage",]
 
@@ -97,13 +97,6 @@ class TemporalPropertyValuesCreate(BaseModel):
 
 
 # Res model+------------------------------------------------------------------------------------------------------
-
-# Common 
-class LinkResponse(BaseModel):
-    href: str
-    rel: str
-    type: str
-
 
 # Normal metadata representation
 class TemporalPropertyResponse(BaseModel):

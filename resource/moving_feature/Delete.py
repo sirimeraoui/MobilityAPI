@@ -1,10 +1,6 @@
 # REQ20: /req/movingfeatures/mf-delete
 # REQ22: /req/movingfeatures/mf-delete-success
-
-from http.server import BaseHTTPRequestHandler, HTTPServer
-from utils import send_json_response
 from psycopg2 import sql
-import json
 from fastapi import HTTPException, Response
 
 

@@ -1,8 +1,5 @@
 # REQ6: /req/mf-collection/collection-get
 # REQU 9: /req/mf-collection/collection-get-success
-
-from http.server import BaseHTTPRequestHandler, HTTPServer
-from utils import send_json_response
 from resource.collection.collection_helper import (
     fetch_collection_by_id,
     build_collection_response

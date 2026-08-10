@@ -3,22 +3,15 @@
 # REQ50-52: Common params (limit, bbox, datetime) 
 # REQ 12-13: subTrajectory param(ogc)
 # REQ23-24: leaf param
-import urllib.parse
-from http.server import BaseHTTPRequestHandler, HTTPServer
-from utils import send_json_response
-from urllib.parse import urlparse, parse_qs
 import json
 from datetime import datetime
-from dateutil import parser, tz
 from resource.moving_feature.feature_helper import build_feature_from_row, build_feature_collection_response
 import traceback
 
 from fastapi import HTTPException
-from fastapi import Depends, HTTPException, Query
-from psycopg2.extras import RealDictCursor
+from fastapi import HTTPException, Query
 from datetime import datetime
 import json
-from db.db import get_db
 
 
 
