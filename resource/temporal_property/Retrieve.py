@@ -3,7 +3,7 @@
 
 from fastapi import HTTPException
 import traceback
-
+from resource.temporal_properties.models import (TemporalPropertyDetailResponse,LinkResponse)
 
 # GET /collections/{collectionId}/items/{featureId}/tproperties/{propertyName}
 async def get_temporal_property(
@@ -186,18 +186,17 @@ async def get_temporal_property(
 
         path = f"/collections/{collection_id}/items/{feature_id}/tproperties/{property_name}"
 
-        response = {
-            "temporalProperties": temporal_properties,
-            "links": [
-                {
-                    "href": path,
-                    "rel": "self",
-                    "type": "application/json",
-                }
-            ],
-        }
 
-        return response
+        return TemporalPropertyDetailResponse(
+            temporalProperties=temporal_properties,
+            links=[
+                LinkResponse(
+                    href=path,
+                    rel="self",
+                    type="application/json",
+                )
+            ],
+        )
 
     except HTTPException:
         raise

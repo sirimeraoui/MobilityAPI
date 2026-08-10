@@ -1,9 +1,10 @@
 # REQ36: /req/movingfeatures/tproperties-get
 # REQ38: /req/movingfeatures/tproperties-get-success
-from resource.temporal_properties.property_helper import build_properties_list_response
 import traceback
 from fastapi import HTTPException
+from datetime import datetime, timezone
 
+from resource.temporal_properties.models import (TemporalPropertiesResponse,LinkResponse)
 # GET properties  base/collections/{collectionId}/items/{featureId}/tproperties
 async def get_tproperties(
     collection_id: str,
@@ -170,20 +171,28 @@ async def get_tproperties(
                     "name": row[0],
                     "type": row[1],
                     "form": row[2],
-                    "interpolation": "linear",
+                    "interpolation": "Linear",
                     "description": row[3],
                 })
 
         # response
         path = f"/collections/{collection_id}/items/{feature_id}/tproperties"
 
-        response = build_properties_list_response(
-            properties,
-            "",
-            path,
-        )
 
-        return response
+
+        return TemporalPropertiesResponse(
+            temporalProperties=properties,
+            links=[
+                LinkResponse(
+                    href=path,
+                    rel="self",
+                    type="application/json",
+                )
+            ],
+            timeStamp=datetime.now(timezone.utc).isoformat(),
+            numberMatched=len(properties),
+            numberReturned=len(properties),
+        )
 
     except HTTPException:
         raise

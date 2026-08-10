@@ -4,13 +4,9 @@
 
 import json
 import traceback
-
 from datetime import datetime
 from fastapi import HTTPException
-
-from resource.temporal_properties.property_helper import validate_interpolation
 from resource.temporal_properties.validation_helper import (
-    validate_value_data,
     validate_collection_exists,
     validate_feature_exists,
     validate_property_exists,
@@ -31,24 +27,6 @@ async def post_temporal_property(
     connection, cursor = db
 
     try:
-        # Validate
-        errors = validate_value_data(data)
-        if errors:
-            raise HTTPException(
-                status_code=400,
-                detail="; ".join(errors),
-            )
-
-        # Acceptable interpolation values?
-        if (
-            "interpolation" in data
-            and not validate_interpolation(data["interpolation"])
-        ):
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid interpolation: {data['interpolation']}",
-            )
-
         # collection exists
         if not validate_collection_exists(cursor, collection_id):
             raise HTTPException(

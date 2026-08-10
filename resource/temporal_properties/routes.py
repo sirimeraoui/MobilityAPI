@@ -10,6 +10,14 @@ from resource.temporal_property.Delete import delete_temporal_property
 from resource.temporal_prim_value.Delete import delete_temporal_primitive_value
 # from sqlmodel.ext.asyncio.session import AsyncSession
 
+
+# it 2 
+from resource.temporal_properties.models import (
+    TemporalPropertiesCreateRequest,
+    TemporalPropertyValuesCreate,
+    TemporalPropertiesResponse,
+    TemporalPropertyDetailResponse,
+)
 # from src.auth.dependencies import AccessTokenBearer, RoleChecker
 # from src.db.main import get_session
 # GET
@@ -28,7 +36,7 @@ from resource.temporal_prim_value.Delete import delete_temporal_primitive_value
 tproperties_router = APIRouter()
 
 
-@tproperties_router.get("")
+@tproperties_router.get("",response_model=TemporalPropertiesResponse)
 async def get_tproperties_route(
     collection_id: str,
     mfeature_id: str,
@@ -47,24 +55,22 @@ async def get_tproperties_route(
     )
 
 
-
 @tproperties_router.post("", status_code=201)
 async def post_tproperties_route(
     collection_id: str,
     mfeature_id: str,
-    data: dict = Body(...),
-    db=Depends(get_db),
+    payload: TemporalPropertiesCreateRequest,
+    db=Depends(get_db)
 ):
     return await post_tproperties(
         collection_id=collection_id,
         feature_id=mfeature_id,
-        data=data,
+        data=payload.model_dump(exclude_none=True),
         db=db,
     )
 
 
-
-@tproperties_router.get("/{property_name}")
+@tproperties_router.get("/{property_name}",response_model=TemporalPropertyDetailResponse)
 async def get_temporal_property_route(
     collection_id: str,
     mfeature_id: str,
@@ -83,22 +89,21 @@ async def get_temporal_property_route(
     )
 
 
-@tproperties_router.post("/{property_name}", status_code=201)
+@tproperties_router.post("/{property_name}",status_code=201)
 async def post_temporal_property_route(
     collection_id: str,
     mfeature_id: str,
     property_name: str,
-    data: dict = Body(...),
+    payload: TemporalPropertyValuesCreate,
     db=Depends(get_db),
 ):
     return await post_temporal_property(
         collection_id,
         mfeature_id,
         property_name,
-        data,
+        payload.model_dump(exclude_none=True),
         db,
     )
-
 
 @tproperties_router.delete("/{property_name}", status_code=204)
 async def delete_temporal_property_route(

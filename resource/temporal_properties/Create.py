@@ -3,9 +3,7 @@
 # REQ 40: /req/movingfeatures/tproperty-mandatory
 
 from fastapi import HTTPException
-from resource.temporal_properties.property_helper import validate_property_type
 from resource.temporal_properties.validation_helper import (
-    validate_property_data,
     validate_collection_exists,
     validate_feature_exists,
 )
@@ -39,21 +37,6 @@ async def post_tproperties(
             )
 
         if data.get("name") is not None:
-
-            # Validate required fields
-            errors = validate_property_data(data)
-            if errors:
-                raise HTTPException(
-                    status_code=400,
-                    detail="; ".join(errors),
-                )
-
-            # Validate property type- REQ 40
-            if not validate_property_type(data["type"]):
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Invalid property type: {data['type']}. Must be one of: TBoolean, TText, TInteger, TReal, TImage",
-                )
 
             # property already exists with same name?
             cursor.execute(
@@ -110,12 +93,7 @@ async def post_tproperties(
                     data = value
                     break
 
-            # Validate property type- REQ 40
-            if not validate_property_type(data["type"]):
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Invalid property type: {data['type']}. Must be one of: TBoolean, TText, TInteger, TReal, TImage",
-                )
+            #property type- REQ 40 assured by pydantic
 
             cursor.execute(
                 """
