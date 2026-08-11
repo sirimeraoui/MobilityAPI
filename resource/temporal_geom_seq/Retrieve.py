@@ -5,85 +5,99 @@ from datetime import datetime
 import json
 from fastapi import HTTPException
 import traceback
-
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+from db.schemas.collection import Collection
 # GET base/collections/{collectionId}/items/{featureId}/tgsequence
 async def get_tgsequence(
     collection_id: str,
     feature_id: str,
-    connection, 
-    cursor 
+    session: AsyncSession
 ):
      
     try:
         # collection exists
-        cursor.execute(
-            "SELECT id FROM collections WHERE id=%s",
-            (collection_id,)
-        )
-        if cursor.fetchone() is None:
+        collection = await session.get(Collection,collection_id)
+
+        if collection is None:
             raise HTTPException(
                 status_code=404,
                 detail=f"Collection '{collection_id}' not found",
             )
 
         # feature exists
-        cursor.execute(
-            """
+        result = await session.execute(
+        text("""
             SELECT id
             FROM moving_features
-            WHERE id=%s
-              AND collection_id=%s
-            """,
-            (feature_id, collection_id),
+            WHERE id = :feature_id
+                AND collection_id = :collection_id
+        """),
+            {
+                "feature_id": feature_id,
+                "collection_id": collection_id,
+            },
         )
 
-        if cursor.fetchone() is None:
+        if result.first() is None:
             raise HTTPException(
                 status_code=404,
                 detail=f"Feature '{feature_id}' not found",
             )
 
         # temporal geometries
-        cursor.execute(
-            """
-            SELECT
-                id,
-                geometry_type,
-                asMFJSON(trajectory),
-                interpolation,
-                base
-            FROM temporal_geometries
-            WHERE feature_id=%s
-              AND collection_id=%s
-            ORDER BY id
-            """,
-            (feature_id, collection_id),
+        result = await session.execute(
+            text("""
+                SELECT
+                    id,
+                    geometry_type,
+                    asMFJSON(trajectory) AS trajectory,
+                    interpolation,
+                    base
+                FROM temporal_geometries
+                WHERE feature_id = :feature_id
+                  AND collection_id = :collection_id
+                ORDER BY id
+            """),
+            {
+                "feature_id": feature_id,
+                "collection_id": collection_id,
+            },
         )
 
-        rows = cursor.fetchall()
+        rows = result.mappings().all()
 
         geometries = []
 
         for row in rows:
-            traj = json.loads(row[2]) if row[2] else {}
+            traj = (
+                json.loads(row["trajectory"])
+                if row["trajectory"]
+                else {}
+            )
 
             geometries.append({
-                "id": row[0],
-                "type": row[1],
+                "id": row["id"],
+                "type": row["geometry_type"],
                 "datetimes": traj.get("datetimes", []),
                 "coordinates": traj.get("coordinates", []),
-                "interpolation": row[3],
-                "base": row[4],
+                "interpolation": row["interpolation"],
+                "base": row["base"],
             })
 
         return {
             "type": "TemporalGeometrySequence",
             "geometrySequence": geometries,
-            "links": [{
-                "href": f"/collections/{collection_id}/items/{feature_id}/tgsequence",
-                "rel": "self",
-                "type": "application/json",
-            }],
+            "links": [
+                {
+                    "href": (
+                        f"/collections/{collection_id}/items/"
+                        f"{feature_id}/tgsequence"
+                    ),
+                    "rel": "self",
+                    "type": "application/json",
+                }
+            ],
             "timeStamp": datetime.utcnow().isoformat() + "Z",
             "numberMatched": len(geometries),
             "numberReturned": len(geometries),
@@ -93,8 +107,8 @@ async def get_tgsequence(
         raise
 
     except Exception as e:
-        connection.rollback()
-        raise HTTPException(
+        await session.rollback()
+        raise HTTPException( 
             status_code=500,
             detail={
                 "error": str(e),

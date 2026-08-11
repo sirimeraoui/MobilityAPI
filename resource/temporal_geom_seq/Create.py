@@ -4,62 +4,60 @@ import json
 from fastapi import HTTPException, Response
 import re
 import traceback
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+from db.schemas.collection import Collection
 
 # POST base/collections/{collectionId}/items/{featureId}/tgsequence
 async def post_tgsequence(
     collection_id: str,
     feature_id: str,
     response: Response,
-    connection,
-    cursor,
+    session:AsyncSession,
     data: dict
 ):
 
     try:
         # collection exists
-        cursor.execute(
-            "SELECT id FROM collections WHERE id=%s",
-            (collection_id,),
-        )
+        collection = await session.get(Collection,collection_id)
 
-        if cursor.fetchone() is None:
+        if collection is None:
             raise HTTPException(
                 status_code=404,
                 detail=f"Collection '{collection_id}' not found",
             )
 
-        # feature exists
-        cursor.execute(
-            """
-            SELECT id
-            FROM moving_features
-            WHERE id=%s
-              AND collection_id=%s
-            """,
-            (feature_id, collection_id),
+        # feature exists + get CRS
+        result = await session.execute(
+            text("""
+                SELECT id, crs
+                FROM moving_features
+                WHERE id = :feature_id
+                  AND collection_id = :collection_id
+            """),
+            {
+                "feature_id": feature_id,
+                "collection_id": collection_id,
+            },
         )
 
-        if cursor.fetchone() is None:
+        feature = result.mappings().first()
+
+        if feature is None:
             raise HTTPException(
                 status_code=404,
                 detail=f"Feature '{feature_id}' not found",
             )
 
-        # SRID
-        cursor.execute(
-            """
-            SELECT crs
-            FROM moving_features
-            WHERE id=%s
-              AND collection_id=%s
-            """,
-            (feature_id, collection_id),
-        )
 
-        crs = cursor.fetchone()
+        crs = feature["crs"]
+        srid = 4326
+        if crs:
+            match = re.search(r"(\d+)",str(crs.get("properties", "")))
 
-        match = re.search(r"(\d+)", str(crs[0]["properties"]))
-        srid = int(match.group(1))
+            if match:
+                srid = int(match.group(1))
+
 
         tgeom_mfjson = json.dumps(data)
 
@@ -73,34 +71,35 @@ async def post_tgsequence(
         ]
 
         placeholders = [
-            "%s",
-            "%s",
-            "%s",
-            "trajectory(SETSRID(tgeompointFromMFJSON(%s), %s))",
-            "SETSRID(tgeompointFromMFJSON(%s), %s)",
-            "%s",
+            ":feature_id",
+            ":collection_id",
+            ":geometry_type",
+            "trajectory(SETSRID(tgeompointFromMFJSON(:mfjson), :srid))",
+            "SETSRID(tgeompointFromMFJSON(:mfjson), :srid)",
+            ":interpolation",
         ]
 
-        values = [
-            feature_id,
-            collection_id,
-            data["type"],
-            tgeom_mfjson,
-            srid,
-            tgeom_mfjson,
-            srid,
-            data["interpolation"],
-        ]
+        values = {
+            "feature_id": feature_id,
+            "collection_id": collection_id,
+            "geometry_type": data.get("type", "MovingPoint"),
+            "mfjson": tgeom_mfjson,
+            "srid": srid,
+            "interpolation": data.get("interpolation", "Linear"),
+        }
 
         if data.get("base") is not None:
             columns.append("base")
-            placeholders.append("%s")
-            values.append(data["base"])
+            placeholders.append(":base")
+            values["base"] = json.dumps(data["base"])
+
 
         if data.get("orientations") is not None:
             columns.append("orientations")
-            placeholders.append("%s")
-            values.append(data["orientations"])
+            placeholders.append(":orientations")
+            values["orientations"] = json.dumps(
+                data["orientations"]
+            )
 
         query = f"""
             INSERT INTO temporal_geometries
@@ -109,11 +108,15 @@ async def post_tgsequence(
             RETURNING id
         """
 
-        cursor.execute(query, values)
+        result = await session.execute(
+        text(query),
+        values,
+        )
 
-        new_id = cursor.fetchone()[0]
 
-        connection.commit()
+        new_id = result.scalar_one()
+
+        await session.commit()
 
         response.headers[
             "Location"
@@ -122,10 +125,11 @@ async def post_tgsequence(
         return data
 
     except HTTPException:
+        await session.rollback()
         raise
 
     except Exception as e:
-        connection.rollback()
+        await session.rollback()
         raise HTTPException(
             status_code=500,
             detail={

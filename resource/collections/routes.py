@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request, HTTPException
-from db.db import get_db, get_async_db
+from db.db import get_async_db
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from resource.collections.Retrieve import get_collections as get_collections_service

@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-from db.db import get_db
 from fastapi import HTTPException, Response
 from resource.temporal_geom_seq.Retrieve import get_tgsequence
 from resource.temporal_geom_seq.Create import post_tgsequence
@@ -17,6 +16,9 @@ from resource.temporal_geom_seq.models import (
     TemporalGeometrySequenceResponse,
 )
 from resource.temporal_geom_query.models import TemporalGeometryQueryResponse
+from db.db import get_db, get_async_db
+from sqlalchemy.ext.asyncio import AsyncSession
+
 tgeomseq_router = APIRouter()
 
 
@@ -24,15 +26,13 @@ tgeomseq_router = APIRouter()
 async def get_tgsequence_route(
     collection_id: str,
     mfeature_id: str,
-    db=Depends(get_db)
+    session: AsyncSession = Depends(get_async_db)
 ):
-    connection, cursor = db
 
     return await get_tgsequence(
         collection_id,
         mfeature_id,
-        connection,
-        cursor
+        session
     )
 
 
@@ -42,16 +42,14 @@ async def post_tgsequence_route(
     mfeature_id: str,
     response: Response,
     payload: TemporalGeometryCreate,
-    db=Depends(get_db),
+    session : AsyncSession=Depends(get_async_db),
 ):
-    connection, cursor = db
 
     return await post_tgsequence(
         collection_id,
         mfeature_id,
         response,
-        connection,
-        cursor,
+        session,
         data=payload.model_dump(),
     )
 
