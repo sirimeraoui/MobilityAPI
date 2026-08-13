@@ -27,3 +27,6 @@ async def get_collections(session, base_url: str):
     except Exception as e:
         print(f"Error in get_collections: {e}")
         raise
+
+
+

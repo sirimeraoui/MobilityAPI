@@ -53,8 +53,18 @@ class MovingFeatureBaseResponse(BaseModel):
     links: list[LinkResponse]
 
 
+# either it has one object, or we return the first object, tgsequence for all tg.
 class MovingFeatureResponse(MovingFeatureBaseResponse):
-    temporalGeometry: list[TemporalGeometryItemResponse] | None = None
+    temporalGeometry: (
+        TemporalGeometryItemResponse
+        | list[TemporalGeometryItemResponse]
+        | None
+    ) = None
+    geometry: (
+        dict[str, Any]
+        | list[dict[str, Any]]
+        | None
+    ) = None
 
 
 class MovingFeatureListItemResponse(MovingFeatureBaseResponse):

@@ -41,6 +41,7 @@ def get_movement_single_moving_feature(
                 mf.time::text,
                 mf.crs,
                 mf.trs,
+
                 json_agg(
                     json_build_object(
                         'id', tg.id,
@@ -49,12 +50,19 @@ def get_movement_single_moving_feature(
                         'interpolation', tg.interpolation,
                         'base', tg.base
                     )
-                ) FILTER (WHERE tg.id IS NOT NULL) AS temporal_geometries
+                ) FILTER (WHERE tg.id IS NOT NULL) AS temporal_geometries,
+
+                json_agg(
+                    ST_AsGeoJSON(trajectory(tg.trajectory))::json
+                ) FILTER (WHERE tg.id IS NOT NULL) AS geometries
+
             FROM moving_features mf
             LEFT JOIN temporal_geometries tg
                 ON mf.id = tg.feature_id
+
             WHERE mf.collection_id = %s
-              AND mf.id = %s
+            AND mf.id = %s
+
             GROUP BY
                 mf.id,
                 mf.type,
@@ -65,8 +73,7 @@ def get_movement_single_moving_feature(
                 mf.trs
             """,
             (collection_id, feature_id),
-        )
-
+)
         row = cursor.fetchone()
 
         if row is None:
@@ -91,5 +98,6 @@ def get_movement_single_moving_feature(
         conn.rollback()
         raise HTTPException(
             status_code=500,
-            detail=f"Internal server error: {str(e)}"
+            # detail=f"Internal server error: {str(e)}"
+            trace= traceback.format_exc()
         )

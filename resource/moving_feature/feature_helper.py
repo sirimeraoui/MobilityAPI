@@ -53,22 +53,34 @@ def build_feature_from_row(row, collection_id, include_temporal=True, single=Fal
 
     
     # Parse temporal geometries if included col 8 ***************Only for Retrieve single moving feature
-    if include_temporal and len(row) > 7 and row[7]:
-        temporal_geometries = []
-        tg_list = row[7]
-        for tg in tg_list:
-            if tg.get('trajectory'):
-                # trajectory bjson to dict
-                traj = json.loads(tg['trajectory'])
-                temporal_geometries.append({
-                    "id": tg['id'],
-                    "type": tg['type'],
-                    "datetimes": traj.get('datetimes', []),
-                    "coordinates": traj.get('coordinates', []),
-                    "interpolation": tg['interpolation'],
-                    "base": tg['base']
-                })
-        feature["temporalGeometry"] = temporal_geometries
+    if include_temporal and len(row) > 7:
+        if row[7]:
+            temporal_geometries = []
+            tg_list = row[7] 
+            for tg in tg_list:
+                if tg.get('trajectory'):
+                    # trajectory bjson to dict
+                    traj = json.loads(tg['trajectory'])
+                    temporal_geometries.append({
+                        "id": tg['id'],
+                        "type": tg['type'],
+                        "datetimes": traj.get('datetimes', []),
+                        "coordinates": traj.get('coordinates', []),
+                        "interpolation": tg['interpolation'],
+                        "base": tg['base']
+                    })
+            feature["temporalGeometry"] = temporal_geometries[0] if len(temporal_geometries) == 1 else temporal_geometries
+        else:
+            feature["temporalGeometry"] = temporal_geometries = {}
+
+        geometries = row[8] or []
+        feature["geometry"] = (
+            geometries[0]
+            if len(geometries) == 1
+            else geometries if geometries
+            else None
+        )
+       
     # *********************************************************************
     return feature
 

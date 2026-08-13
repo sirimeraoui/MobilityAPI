@@ -11,6 +11,8 @@ from contextlib import asynccontextmanager
 
 from db.db import init_db
 
+from fastapi.middleware.cors import CORSMiddleware
+
 @asynccontextmanager
 async def life_span(app:FastAPI):
     print(f"MobilityDB Fastapi starting ...")
@@ -45,6 +47,17 @@ app = FastAPI(
     openapi_url=f"{version_prefix}/openapi.json",
     docs_url=f"{version_prefix}/docs",
     redoc_url=f"{version_prefix}/redoc"
+)
+
+# uncomment this code to accept requests from Stinuum, or add any other client to allowed origins. modify Sinuum's server url to 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:8080",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # register_all_errors(app)

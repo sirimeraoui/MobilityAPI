@@ -612,7 +612,7 @@ def test_get_single_moving_feature(create_collections):
     assert "links" in feature
     
     if feature.get("temporalGeometry"): #check geometry ogc list
-        assert isinstance(feature["temporalGeometry"], list)
+        assert isinstance(feature["temporalGeometry"],(dict,list))
 
 # #================================================DELETE /collections/{id}/items/{featureId}===========================================
 def test_delete_single_moving_feature(create_collections):
@@ -1036,15 +1036,15 @@ def test_delete_temporal_property(setup_property_test_data):
 
     ####subtemporal is missing 
 # ============================================== TEST delete all collection==============================================
-# def test_delete_all_created_collections(create_collections):
-#     created_collections = ["ships", "boats"]
-#     for col_id in created_collections:
-#         resp = requests.delete(f"{HOST}/collections/{col_id}")
-#         print(f"Deleting collection {col_id} ====> status: {resp.status_code}")
-#         assert resp.status_code in (200, 204, 404)
+def test_delete_all_created_collections(create_collections):
+    created_collections = ["boats"]
+    for col_id in created_collections:
+        resp = requests.delete(f"{HOST}/collections/{col_id}")
+        print(f"Deleting collection {col_id} ====> status: {resp.status_code}")
+        assert resp.status_code in (200, 204, 404)
 
 
-def test_finalize():
+def finalize():
     # pymeos_finalize()
     print("#######################################################################################")
     print("***************************************END OF TESTS************************************")
