@@ -5,6 +5,7 @@ from resource.moving_features.routes import mfeatures_router
 from resource.temporal_properties.routes import tproperties_router
 from resource.temporal_geom_seq.routes import tgeomseq_router
 # from .errors import register_all_errors
+from resource.lakehouse.routes import lakehouse_router
 # from .middleware import register_middleware
 import psycopg2 
 from contextlib import asynccontextmanager
@@ -64,7 +65,11 @@ app.add_middleware(
 
 # register_middleware(app)
 
-
+app.include_router(
+    lakehouse_router,
+    prefix=f"{version_prefix}/collections/{{collection_id}}",
+    tags=["Lakehouse"],
+)
                    
 app.include_router(
     collections_router,

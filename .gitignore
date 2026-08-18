@@ -176,3 +176,5 @@ tmp.txt
 
 #---
 server.py
+extensions/mobilityduck.*
+maps

@@ -35,10 +35,11 @@ def parquet_to_iceberg(
         con.execute("""
             CREATE OR REPLACE SECRET polaris_secret (
                 TYPE iceberg,
-                CLIENT_ID '9f4cc3609fdcf296',
-                CLIENT_SECRET 'a482121328018941b2cce50f3a11c2ef',
-                OAUTH2_SERVER_URI
-                    'http://localhost:8181/api/catalog/v1/oauth/tokens'
+                CLIENT_ID '56311c8f2cadf8d6',
+                CLIENT_SECRET '0f5389d15c39872f9ce819476592acca',
+                OAUTH2_SERVER_URI 'http://localhost:8181/api/catalog/v1/oauth/tokens',
+                OAUTH2_GRANT_TYPE 'client_credentials',
+                OAUTH2_SCOPE 'PRINCIPAL_ROLE:ALL'
             )
         """)
 
