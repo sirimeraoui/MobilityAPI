@@ -2,7 +2,7 @@ from fastapi.responses import StreamingResponse
 from resource.lakehouse.export import export_collection_to_parquet
 from resource.lakehouse.iceberg import parquet_to_iceberg
 from fastapi import APIRouter, Depends, status, Response
-from db.db import get_db
+from db.mobilitydb import get_db
 lakehouse_router = APIRouter()
 
 @lakehouse_router.get("/export")

@@ -42,7 +42,7 @@ async def get_async_db():
     async with AsyncSessionLocal() as session:
         yield session
 
-async def init_db():
+async def init_mobilitydb():
     async with async_engine.begin() as conn:
     # create tables if not exist
         await conn.execute(text("""

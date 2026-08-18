@@ -6,9 +6,11 @@ class Settings(BaseSettings):
     DB : str
     DB_USER : str
     PASSWORD : str
+    BACKEND: str
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore"
     )
+    
 
 Config = Settings()

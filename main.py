@@ -10,28 +10,29 @@ from resource.lakehouse.routes import lakehouse_router
 import psycopg2 
 from contextlib import asynccontextmanager
 
-from db.db import init_db
+from db.init import init_backend
+from config import Config
 
 from fastapi.middleware.cors import CORSMiddleware
 
 @asynccontextmanager
 async def life_span(app:FastAPI):
-    print(f"MobilityDB Fastapi starting ...")
+    print(f"MobilityAPI starting starting with {Config.BACKEND}")
     # initalise the db schema
-    await init_db()
+    await init_backend()
     yield
     print(f"MobilityDB Fastapi stopped")
 
 version = "v1"
 
 description = """
-An open-source implementation of the [OGC API – Moving Features Standard](https://docs.ogc.org/is/22-003r3/22-003r3.html), built on top of [MobilityDB](https://github.com/MobilityDB/MobilityDB/).
+An open-source implementation of the [OGC API – Moving Features Standard](https://docs.ogc.org/is/22-003r3/22-003r3.html), built on top of [MobilityDB/...upcoming](https://github.com/MobilityDB/MobilityDB/).
     """
 
 version_prefix =f"/api/{version}"
 
 app = FastAPI(
-    title="MobilityDB API",
+    title="MobilityAPI",
     description=description,
     version=version,
     lifespan=life_span,

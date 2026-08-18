@@ -1,7 +1,7 @@
 from typing import List
 
 from fastapi import APIRouter, Depends, status, Response
-from db.db import get_db
+from db.mobilitydb import get_db
 # from sqlmodel.ext.asyncio.session import AsyncSession
 
 # ite 2 

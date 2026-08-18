@@ -1,7 +1,7 @@
 from typing import List
 
 from fastapi import APIRouter, Depends, status,Body, Query
-from db.db import get_db
+from db.mobilitydb import get_db
 from resource.temporal_properties.Retrieve import get_tproperties
 from resource.temporal_properties.Create import post_tproperties
 from resource.temporal_property.Retrieve import get_temporal_property

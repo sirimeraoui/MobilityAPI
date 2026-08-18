@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request, HTTPException
-from db.db import get_async_db
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from resource.collections.Retrieve import get_collections as get_collections_service
@@ -7,7 +7,7 @@ from resource.collections.Create import post_collections as post_collections_ser
 from resource.collection.Retrieve import get_collection_id
 from resource.collection.Replace import put_collection
 from resource.collection.Delete import delete_collection
-
+from backends.dependency import get_collections_backend
 # iteration 2
 from resource.collections.models import (
     CollectionCreate,
@@ -23,12 +23,12 @@ collections_router = APIRouter()
 async def post_collections_route(
     payload: CollectionCreate,
     request: Request,
-    session: AsyncSession = Depends(get_async_db)
+    backend=Depends(get_collections_backend)
 ):
 
     try:
         collection_id, collection_data = await post_collections_service(
-            session,
+            backend,
             payload.model_dump(),
             base_url=str(request.base_url).rstrip("/")
         )
@@ -50,21 +50,21 @@ async def post_collections_route(
 
 
 @collections_router.get("",response_model=CollectionsResponse)
-async def get_collections_route(request: Request,session: AsyncSession=Depends(get_async_db)):
+async def get_collections_route(request: Request,backend=Depends(get_collections_backend)):
     base_url = str(request.base_url).rstrip("/")
-    return await get_collections_service(session,base_url)
+    return await get_collections_service(backend,base_url)
 
 
 
 @collections_router.get("/{collection_id}",response_model=CollectionResponse,)
 async def get_collection_route(collection_id: str,
     request: Request,
-    session:AsyncSession = Depends(get_async_db)
+    backend=Depends(get_collections_backend)
 ):
 
     try:
         base_url = str(request.base_url).rstrip("/")
-        return await get_collection_id(session,collection_id,base_url)
+        return await get_collection_id(backend,collection_id,base_url)
 
     except ValueError as e:
         raise HTTPException(
@@ -81,7 +81,7 @@ async def get_collection_route(collection_id: str,
 async def put_collection_route(
     collection_id: str,
     payload: CollectionReplace,
-    session: AsyncSession = Depends(get_async_db)
+    backend=Depends(get_collections_backend)
 ):
     try:
         data_dict = payload.model_dump(exclude_unset=True)
@@ -89,7 +89,7 @@ async def put_collection_route(
         await put_collection(
             collection_id,
             data_dict,
-            session 
+            backend
         )
 
         return None
@@ -105,10 +105,10 @@ async def put_collection_route(
 
 
 @collections_router.delete("/{collection_id}", status_code=204)
-async def delete_collection_route(collection_id: str, session:AsyncSession=Depends(get_async_db)):
+async def delete_collection_route(collection_id: str,  backend=Depends(get_collections_backend)):
 
     try:
-        await delete_collection(collection_id, session)
+        await delete_collection(collection_id, backend)
         return None
 
     except HTTPException as e:

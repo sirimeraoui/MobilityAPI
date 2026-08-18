@@ -16,7 +16,7 @@ from resource.temporal_geom_seq.models import (
     TemporalGeometrySequenceResponse,
 )
 from resource.temporal_geom_query.models import TemporalGeometryQueryResponse
-from db.db import get_db, get_async_db
+from db.mobilitydb import get_db, get_async_db
 from sqlalchemy.ext.asyncio import AsyncSession
 
 tgeomseq_router = APIRouter()

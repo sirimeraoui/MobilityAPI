@@ -7,7 +7,6 @@ import pandas as pd
 import ijson
 import os
 HOST = "http://127.0.0.1:8000/api/v1"
-# pymeos_initialize()
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 data= os.path.join(script_dir, "../data", "trajectories_mf1.json")
