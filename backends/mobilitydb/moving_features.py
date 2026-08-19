@@ -139,10 +139,7 @@ class MobilityDBMovingFeaturesBackend(MovingFeaturesBackend):
 
             query += """
                 AND tg.trajectory &&
-                setsrid(
-                    CAST(:bbox_stbox AS stbox),
-                    srid(tg.trajectory)
-                )
+                setsrid(CAST(:bbox_stbox AS stbox),srid(tg.trajectory))
             """
 
             params["bbox_stbox"] = bbox_stbox
@@ -153,44 +150,25 @@ class MobilityDBMovingFeaturesBackend(MovingFeaturesBackend):
 
         if dt1 and dt2:
             query += """
-                AND tg.trajectory &&
-                CAST(:period AS tstzspan)
+                AND tg.trajectory && CAST(:period AS tstzspan)
             """
             params["period"] = f"[{dt1}, {dt2}]"
 
         elif dt1:
             query += """
-                AND tg.trajectory &&
-                CAST(:period AS tstzspan)
+                AND tg.trajectory && CAST(:period AS tstzspan)
             """
             params["period"] = f"[{dt1}, {dt1}]"
 
         # special case: clipped trajectory
         if subTrajectory and dt1 and dt2:
-            geometry_expr = """
-                ST_AsGeoJSON(
-                    trajectory(
-                        atTime(
-                            tg.trajectory,
-                            CAST(:period AS tstzspan)
-                        )
-                    )
-                )
-            """
+            geometry_expr = "ST_AsGeoJSON(trajectory(atTime(tg.trajectory,CAST(:period AS tstzspan))))"
 
-            trajectory_expr = """
-                asMFJSON(
-                    atTime(
-                        tg.trajectory,
-                        CAST(:period AS tstzspan)
-                    )
-                )
-            """
+            trajectory_expr = """asMFJSON(atTime(tg.trajectory,CAST(:period AS tstzspan)))"""
 
         query += f"""
             ORDER BY mf.created_at
-            LIMIT :limit
-        )
+            LIMIT :limit)
         SELECT mf.id, mf.type, {geometry_expr}, mf.properties, mf.bbox::text, mf.time::text,
             mf.crs,
             mf.trs,
@@ -200,17 +178,12 @@ class MobilityDBMovingFeaturesBackend(MovingFeaturesBackend):
             tg.interpolation,
             tg.base
         FROM limited_features lf
-        JOIN moving_features mf
-            ON mf.id = lf.id
-        LEFT JOIN temporal_geometries tg
-            ON mf.id = tg.feature_id
+        JOIN moving_features mf ON mf.id = lf.id 
+        LEFT JOIN temporal_geometries tg ON mf.id = tg.feature_id
         ORDER BY mf.created_at
         """
 
-        result = await self.session.execute(
-            text(query),
-            params,
-        )
+        result = await self.session.execute(text(query),params)
 
         return result.fetchall()
 # by feature id operations:
