@@ -162,3 +162,13 @@ async def init_mobilitydb():
             FOR EACH ROW
             EXECUTE FUNCTION update_mfeatures_on_tg();
         """))
+
+        await conn.execute(text("""
+            ALTER TABLE temporal_geometries
+            ADD COLUMN IF NOT EXISTS base JSONB
+        """))
+
+        await conn.execute(text("""
+            ALTER TABLE temporal_geometries
+            ADD COLUMN IF NOT EXISTS orientations JSONB
+        """))

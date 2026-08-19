@@ -17,14 +17,14 @@ import json
 
 async def get_collection_items(
     collection_id: str,
-    db,
+    backend,
     limit: int = Query(10, le=10000),
     bbox: str | None = None,
     datetime_param: str | None = Query(None, alias="datetime"),
     subTrajectory: bool = False,
     leaf: bool = False
 ):
-    connection, cursor = db
+    # connection, cursor = db
     try:
 
       #quey params validation
@@ -35,19 +35,16 @@ async def get_collection_items(
             )
 
         x1 = y1 = x2 = y2 = None
-
+        bbox_coords = None
         if bbox:
             try:
-                coords = [float(c) for c in bbox.split(",")]
+                bbox_coords = [float(c) for c in bbox.split(",")]
 
-                if len(coords) != 4:
+                if len(bbox_coords) != 4:
                     raise HTTPException(
                         status_code=400,
                         detail="Invalid bbox format",
                     )
-
-                x1, y1, x2, y2 = coords
-
             except ValueError:
                 raise HTTPException(
                     status_code=400,
@@ -84,77 +81,26 @@ async def get_collection_items(
                 detail="subTrajectory requires a datetime interval",
             )
 
-        # -----------------------------
-        # Check collection exists
-        # -----------------------------
-        cursor.execute(
-            "SELECT id FROM collections WHERE id=%s",
-            (collection_id,),
-        )
 
-        if cursor.fetchone() is None:
+        if not await backend.collection_exists(collection_id):
             raise HTTPException(
                 status_code=404,
                 detail=f"Collection '{collection_id}' not found",
             )
 
-        # -----------------------------
-        # Main query
-        # -----------------------------
-        query = """
-        SELECT
-            mf.id,
-            mf.type,
-            ST_AsGeoJSON(tg.geometry),
-            mf.properties,
-            mf.bbox::text,
-            mf.time::text,
-            mf.crs,
-            mf.trs,
-            tg.id,
-            tg.geometry_type,
-            asMFJSON(tg.trajectory),
-            tg.interpolation,
-            tg.base,
-            COUNT(*) OVER() AS total_count
-        FROM moving_features mf
-        LEFT JOIN temporal_geometries tg
-            ON mf.id = tg.feature_id
-        WHERE mf.collection_id = %s
-        """
+   
+        # get limit first
+   
+        rows = await backend.get_items(
+            collection_id=collection_id,
+            limit=limit,
+            bbox_coords=bbox_coords,
+            dt1=dt1,
+            dt2=dt2,
+            subTrajectory=subTrajectory
+        )
 
-        params = [collection_id]
-
-        if x1 is not None:
-            query += """
-            AND tg.trajectory &&
-            setsrid(
-                stbox 'STBOX X((%s,%s),(%s,%s))',
-                srid(tg.trajectory)
-            )
-            """
-            params.extend([x1, y1, x2, y2])
-
-        if dt1 and dt2:
-            query += " AND tg.trajectory && tstzspan %s"
-            params.append(f"[{dt1}, {dt2}]")
-
-        elif dt1:
-            query += " AND tg.trajectory && tstzspan %s"
-            params.append(f"[{dt1}, {dt1}]")
-
-        query += " ORDER BY mf.created_at LIMIT %s"
-        params.append(limit)
-
-        cursor.execute(query, params)
-
-        rows = cursor.fetchall()
-
-        # -----------------------------
-        # Empty result
-        # -----------------------------
         if not rows:
-
             return {
                 "type": "FeatureCollection",
                 "features": [],
@@ -164,17 +110,12 @@ async def get_collection_items(
                 "links": [],
             }
 
-        total_count = rows[0][13]
-
         features_dict = {}
 
-        #build response
         for row in rows:
-
             feature_id = row[0]
 
             if feature_id not in features_dict:
-
                 feature_row = (
                     row[0],
                     row[1],
@@ -198,44 +139,16 @@ async def get_collection_items(
                 features_dict[feature_id] = feature
 
             if row[8]:
-
                 geometry = row[2]
                 mf_json = json.loads(row[10])
-                sub_geometry = None
-
-                if subTrajectory and dt1 and dt2:
-
-                    interval = f"[{dt1}, {dt2}]"
-
-                    sub_query = """
-                    WITH time_window AS (
-                        SELECT tstzspan %s AS tw
-                    )
-                    SELECT
-                        asMFJSON(atTime(tg.trajectory, tw)),
-                        ST_AsGeoJSON(
-                            trajectory(
-                                atTime(tg.trajectory, tw)
-                            )
-                        )
-                    FROM temporal_geometries tg
-                    CROSS JOIN time_window
-                    WHERE id=%s
-                    """
-
-                    cursor.execute(sub_query, (interval, row[8]))
-
-                    sub_row = cursor.fetchone()
-
-                    if sub_row and sub_row[0]:
-
-                        mf_json = json.loads(sub_row[0])
-                        sub_geometry = sub_row[1]
 
                 if leaf and "datetimes" in mf_json:
-
-                    mf_json["coordinates"] = [mf_json["coordinates"][-1]]
-                    mf_json["datetimes"] = [mf_json["datetimes"][-1]]
+                    mf_json["coordinates"] = [
+                        mf_json["coordinates"][-1]
+                    ]
+                    mf_json["datetimes"] = [
+                        mf_json["datetimes"][-1]
+                    ]
                     mf_json["interpolation"] = "Discrete"
 
                 temporal_geom = {
@@ -255,12 +168,12 @@ async def get_collection_items(
                     temporal_geom
                 )
 
-                if sub_geometry:
-                    geometry = json.loads(sub_geometry)
-                else:
-                    geometry = json.loads(geometry)
+                if geometry:
+                    features_dict[feature_id]["geometry"].append(
+                        json.loads(geometry)
+                    )
 
-                features_dict[feature_id]["geometry"].append(geometry)
+        total_count = len(features_dict)
 
         response = build_feature_collection_response(
             features=list(features_dict.values()),
@@ -278,7 +191,7 @@ async def get_collection_items(
         raise
 
     except Exception as e:
-        connection.rollback()
+        await backend.rollback()
         raise HTTPException(
             status_code=500,
             detail={

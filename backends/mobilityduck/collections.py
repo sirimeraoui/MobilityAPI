@@ -6,7 +6,6 @@ class MobilityDuckCollectionsBackend(CollectionsBackend):
 
     def __init__(self, connection):
         self.connection = connection
-
     async def exists(self, collection_id: str):
         row = self.connection.execute(
             """
@@ -17,9 +16,8 @@ class MobilityDuckCollectionsBackend(CollectionsBackend):
             """,
             [collection_id],
         ).fetchone()
-
         return row is not None
-
+# cl
     async def fetch_all_collections(self):
         rows = self.connection.execute(
             """

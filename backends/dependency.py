@@ -12,6 +12,14 @@ from backends.mobilityduck.collections import (
 )
 
 
+from backends.mobilitydb.moving_features import (
+    MobilityDBMovingFeaturesBackend,
+)
+
+# from backends.mobilityduck.moving_features import (
+#     MobilityDuckMovingFeaturesBackend,
+# )
+
 async def get_collections_backend():
 
     if Config.BACKEND == "mobilitydb":
@@ -31,7 +39,31 @@ async def get_collections_backend():
 
     # future:
     # if Config.BACKEND == "mobilityspark":
-    #     ...
+
+    raise RuntimeError(
+        f"Unsupported backend: {Config.BACKEND}"
+    )
+
+
+async def get_moving_features_backend():
+
+    if Config.BACKEND == "mobilitydb":
+        async with AsyncSessionLocal() as session:
+            yield MobilityDBMovingFeaturesBackend(session)
+        return
+
+    # if Config.BACKEND == "mobilityduck":
+    #     con = create_mobilityduck_connection()
+
+    #     try:
+    #         yield MobilityDuckMovingFeaturesBackend(con)
+    #     finally:
+    #         con.close()
+
+    #     return
+
+    # future:
+    # if Config.BACKEND == "mobilityspark":
 
     raise RuntimeError(
         f"Unsupported backend: {Config.BACKEND}"

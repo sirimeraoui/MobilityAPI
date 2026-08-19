@@ -1,5 +1,11 @@
-# extensions/mobilitydb_sqlalchemy/__init__.py
-
 from .types import TGeomPoint
+from .functions import (
+    tgeompointFromMFJSON,
+    setSRID,
+)
 
-__all__ = ["TGeomPoint"]
+__all__ = [
+    "TGeomPoint",
+    "tgeompointFromMFJSON",
+    "setSRID",
+]

@@ -1,6 +1,7 @@
 import duckdb
+from sqlmodel import BIGINT
 
-
+# note: duckdb2 coming fall 2026 will support triggers
 def create_mobilityduck_connection():
     con = duckdb.connect(
         "mobilityapi.duckdb",
@@ -14,7 +15,6 @@ def create_mobilityduck_connection():
     )
 
     return con
-
 
 def init_mobilityduck():
     con = create_mobilityduck_connection()
@@ -31,6 +31,62 @@ def init_mobilityduck():
             )
         """)
 
+        con.execute("""
+            CREATE TABLE IF NOT EXISTS moving_features (
+                id TEXT PRIMARY KEY,
+                collection_id TEXT REFERENCES collections(id) ON DELETE CASCADE,
+                type TEXT DEFAULT 'Feature',
+                properties JSONB,
+                bbox STBOX,
+                time TSTZSPAN,
+                crs JSONB DEFAULT '{"type":"Name","properties":{"name":"urn:ogc:def:crs:OGC:1.3:CRS84"}}'::jsonb,
+                trs JSONB DEFAULT '{"type":"Name","properties":{"name":"urn:ogc:data:time:iso8601"}}'::jsonb,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            )
+        """)
+
+        con.execute("CREATE SEQUENCE IF NOT EXISTS temporal_geometries_id_seq START 1")
+        con.execute("""
+            CREATE TABLE IF NOT EXISTS temporal_geometries (
+                id BIGINT PRIMARY KEY DEFAULT nextval('temporal_geometries_id_seq'),
+                feature_id TEXT REFERENCES moving_features(id),
+                collection_id TEXT REFERENCES collections(id),
+                geometry_type TEXT,
+                geometry geometry,
+                trajectory tgeompoint,
+                interpolation TEXT,
+                base JSONB,
+                orientations JSONB,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            )
+        """)
+        con.execute("CREATE SEQUENCE IF NOT EXISTS temporal_properties_id_seq START 1")
+        con.execute("""
+            CREATE TABLE IF NOT EXISTS temporal_properties (
+                id BIGINT PRIMARY KEY DEFAULT nextval('temporal_properties_id_seq'),
+                feature_id TEXT REFERENCES moving_features(id),
+                property_name TEXT NOT NULL,
+                property_type TEXT NOT NULL,
+                form TEXT,
+                description TEXT,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            )
+        """)
+        con.execute("CREATE SEQUENCE IF NOT EXISTS temporal_values_id_seq START 1")
+        con.execute("""
+            CREATE TABLE IF NOT EXISTS temporal_values (
+                id BIGINT PRIMARY KEY DEFAULT nextval('temporal_values_id_seq'),
+                property_id INTEGER REFERENCES temporal_properties(id),
+                datetimes TIMESTAMPTZ[] NOT NULL,
+                values JSONB NOT NULL,
+                interpolation TEXT DEFAULT 'Linear',
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            )
+        """)
     finally:
         con.close()
 

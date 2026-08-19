@@ -181,7 +181,7 @@ run_tests() {
 
     echo -e "${YELLOW}Running integration tests...${NC}"
 
-    pytest -v -s tests/fastapitest.py 
+    pytest -v -s tests/test_MobilityAPI.py 
 
     TEST_EXIT=$?
 

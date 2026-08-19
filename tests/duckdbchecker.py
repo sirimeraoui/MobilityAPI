@@ -1,4 +1,7 @@
 import duckdb
+
+print(duckdb.__version__)
+
 con = duckdb.connect(
         "../mobilityapi.duckdb",
         config={

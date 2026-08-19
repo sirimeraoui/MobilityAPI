@@ -1,7 +1,7 @@
 import pytest
 import requests
 import json
-from pymeos import *
+
 import urllib.parse
 import pandas as pd
 import ijson
