@@ -8,6 +8,7 @@ from sqlalchemy import insert, func, text
 
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
+from zmq import backend
 
 
 from db.schemas.temporal_geometry import TemporalGeometry
@@ -34,10 +35,13 @@ async def post_collection_items(
         else:
             features = [data]
 
+        await backend.begin()
+
         for feature in features:
             feature_id = await backend.create(feature=feature,collection_id=collection_id)
             if feature_id:
                 created_feature_ids.append(feature_id)
+                
         await backend.commit()
         locations = ", ".join(
             f"{base_url}api/v1/collections/{collection_id}/items/{feature_id}"

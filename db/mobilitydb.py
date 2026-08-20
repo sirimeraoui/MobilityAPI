@@ -19,7 +19,7 @@ def get_db():
     finally:
         cursor.close()
         conn.close()
-# :::::::::::::::::::::::::::ite3
+
 
 DATABASE_URL = (
     f"postgresql+asyncpg://"

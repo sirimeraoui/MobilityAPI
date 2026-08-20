@@ -1,6 +1,8 @@
 import duckdb
 from sqlmodel import BIGINT
 
+from backends.base import collections
+
 # note: duckdb2 coming fall 2026 will support triggers
 def create_mobilityduck_connection():
     con = duckdb.connect(
@@ -30,11 +32,11 @@ def init_mobilityduck():
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-
+        # collection_id TEXT REFERENCES collections(id),
         con.execute("""
             CREATE TABLE IF NOT EXISTS moving_features (
                 id TEXT PRIMARY KEY,
-                collection_id TEXT REFERENCES collections(id) ON DELETE CASCADE,
+                collection_id TEXT,
                 type TEXT DEFAULT 'Feature',
                 properties JSONB,
                 bbox STBOX,
@@ -47,11 +49,13 @@ def init_mobilityduck():
         """)
 
         con.execute("CREATE SEQUENCE IF NOT EXISTS temporal_geometries_id_seq START 1")
+        #    feature_id TEXT REFERENCES moving_features(id),
+        #     collection_id TEXT REFERENCES collections(id),
         con.execute("""
             CREATE TABLE IF NOT EXISTS temporal_geometries (
                 id BIGINT PRIMARY KEY DEFAULT nextval('temporal_geometries_id_seq'),
-                feature_id TEXT REFERENCES moving_features(id),
-                collection_id TEXT REFERENCES collections(id),
+                feature_id TEXT,
+                collection_id TEXT,
                 geometry_type TEXT,
                 geometry geometry,
                 trajectory tgeompoint,
@@ -63,10 +67,11 @@ def init_mobilityduck():
             )
         """)
         con.execute("CREATE SEQUENCE IF NOT EXISTS temporal_properties_id_seq START 1")
+        # feature_id TEXT REFERENCES moving_features(id),
         con.execute("""
             CREATE TABLE IF NOT EXISTS temporal_properties (
                 id BIGINT PRIMARY KEY DEFAULT nextval('temporal_properties_id_seq'),
-                feature_id TEXT REFERENCES moving_features(id),
+                feature_id TEXT,
                 property_name TEXT NOT NULL,
                 property_type TEXT NOT NULL,
                 form TEXT,
@@ -76,10 +81,11 @@ def init_mobilityduck():
             )
         """)
         con.execute("CREATE SEQUENCE IF NOT EXISTS temporal_values_id_seq START 1")
+        #  property_id BIGINT REFERENCES temporal_properties(id),
         con.execute("""
             CREATE TABLE IF NOT EXISTS temporal_values (
                 id BIGINT PRIMARY KEY DEFAULT nextval('temporal_values_id_seq'),
-                property_id INTEGER REFERENCES temporal_properties(id),
+                property_id BIGINT,
                 datetimes TIMESTAMPTZ[] NOT NULL,
                 values JSONB NOT NULL,
                 interpolation TEXT DEFAULT 'Linear',

@@ -18,14 +18,10 @@ from resource.moving_feature.Delete import delete_single_moving_feature
 from backends.dependency import get_moving_features_backend
 # GET /collections/{collection_id}/items
 # POST /collections/{collection_id}/items
-
 # GET /collections/{collection_id}/items/{mfeature_id}
 # DELETE /collections/{collection_id}/items/{mfeature_id}
+
 mfeatures_router = APIRouter()
-
-
-
-
 
 @mfeatures_router.get( "",response_model=MovingFeatureCollectionResponse)
 async def retrieve_collection_items(
@@ -35,8 +31,8 @@ async def retrieve_collection_items(
     datetime: str | None = None,
     subTrajectory: bool = False,
     leaf: bool = False,
-    backend=Depends(get_moving_features_backend)
-):
+    backend=Depends(get_moving_features_backend)):
+    
     return await get_collection_items(
         collection_id=collection_id,
         backend=backend,
@@ -67,29 +63,24 @@ async def create_collection_items(
 async def get_moving_feature(
     collection_id: str,
     mfeature_id: str,
-    db=Depends(get_db),
+    backend=Depends(get_moving_features_backend),
 ):
-    connection, cursor = db
 
-    return get_movement_single_moving_feature(
+    return await get_movement_single_moving_feature(
         collection_id=collection_id,
         feature_id=mfeature_id,
-        connection=connection,
-        cursor=cursor,
+        backend=backend,
     )
-
 
 @mfeatures_router.delete("/{mfeature_id}", status_code=204)
 async def delete_moving_feature(
     collection_id: str,
     mfeature_id: str,
-    db=Depends(get_db),
+    backend=Depends(get_moving_features_backend),
 ):
-    connection, cursor = db
 
-    return delete_single_moving_feature(
+    return await delete_single_moving_feature(
         collection_id=collection_id,
         feature_id=mfeature_id,
-        connection=connection,
-        cursor=cursor,
+        backend=backend,
     )

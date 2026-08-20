@@ -5,76 +5,23 @@ import traceback
 from fastapi import HTTPException
 
 
-def get_movement_single_moving_feature(
+async def get_movement_single_moving_feature(
     collection_id: str,
     feature_id: str,
-    connection,
-    cursor
+    backend
 ):
-    conn = connection
+
 
     try:
         # Check collection exists
-        cursor.execute(
-            """
-            SELECT id
-            FROM collections
-            WHERE id = %s
-            """,
-            (collection_id,),
-        )
-
-        if cursor.fetchone() is None:
+        if not await backend.collection_exists(collection_id):
             raise HTTPException(
                 status_code=404,
                 detail=f"Collection '{collection_id}' not found"
             )
 
-        # Get feature with its temporal geometries
-        cursor.execute(
-            """
-            SELECT
-                mf.id,
-                mf.type,
-                mf.properties,
-                mf.bbox::text,
-                mf.time::text,
-                mf.crs,
-                mf.trs,
-
-                json_agg(
-                    json_build_object(
-                        'id', tg.id,
-                        'type', tg.geometry_type,
-                        'trajectory', asMFJSON(tg.trajectory),
-                        'interpolation', tg.interpolation,
-                        'base', tg.base
-                    )
-                ) FILTER (WHERE tg.id IS NOT NULL) AS temporal_geometries,
-
-                json_agg(
-                    ST_AsGeoJSON(trajectory(tg.trajectory))::json
-                ) FILTER (WHERE tg.id IS NOT NULL) AS geometries
-
-            FROM moving_features mf
-            LEFT JOIN temporal_geometries tg
-                ON mf.id = tg.feature_id
-
-            WHERE mf.collection_id = %s
-            AND mf.id = %s
-
-            GROUP BY
-                mf.id,
-                mf.type,
-                mf.properties,
-                mf.bbox,
-                mf.time,
-                mf.crs,
-                mf.trs
-            """,
-            (collection_id, feature_id),
-)
-        row = cursor.fetchone()
+        await backend.begin()
+        row = await backend.get_feature(collection_id, feature_id)
 
         if row is None:
             raise HTTPException(
@@ -95,9 +42,10 @@ def get_movement_single_moving_feature(
         raise
 
     except Exception as e:
-        conn.rollback()
+        await backend.rollback()
+        traceback.print_exc()
         raise HTTPException(
             status_code=500,
-            # detail=f"Internal server error: {str(e)}"
-            trace= traceback.format_exc()
+            detail=f"Internal server error: {str(e)}"
+            # trace= traceback.format_exc()
         )

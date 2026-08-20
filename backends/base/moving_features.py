@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
 
 class MovingFeaturesBackend(ABC):
-
+    @abstractmethod
+    async def begin(self):
+        pass
     @abstractmethod
     async def create(
         self,
@@ -24,7 +26,7 @@ class MovingFeaturesBackend(ABC):
 
 # by feature id operations:
     @abstractmethod
-    async def get(
+    async def get_feature(
         self,
         collection_id: str,
         mfeature_id: str,

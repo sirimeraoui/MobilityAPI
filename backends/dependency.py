@@ -16,9 +16,9 @@ from backends.mobilitydb.moving_features import (
     MobilityDBMovingFeaturesBackend,
 )
 
-# from backends.mobilityduck.moving_features import (
-#     MobilityDuckMovingFeaturesBackend,
-# )
+from backends.mobilityduck.moving_features import (
+    MobilityDuckMovingFeaturesBackend,
+)
 
 async def get_collections_backend():
 
@@ -52,15 +52,15 @@ async def get_moving_features_backend():
             yield MobilityDBMovingFeaturesBackend(session)
         return
 
-    # if Config.BACKEND == "mobilityduck":
-    #     con = create_mobilityduck_connection()
+    if Config.BACKEND == "mobilityduck":
+        con = create_mobilityduck_connection()
 
-    #     try:
-    #         yield MobilityDuckMovingFeaturesBackend(con)
-    #     finally:
-    #         con.close()
+        try:
+            yield MobilityDuckMovingFeaturesBackend(con)
+        finally:
+            con.close()
 
-    #     return
+        return
 
     # future:
     # if Config.BACKEND == "mobilityspark":

@@ -7,8 +7,7 @@ class MobilityDuckCollectionsBackend(CollectionsBackend):
     def __init__(self, connection):
         self.connection = connection
     async def exists(self, collection_id: str):
-        row = self.connection.execute(
-            """
+        row = self.connection.execute("""
             SELECT 1
             FROM collections
             WHERE id = ?

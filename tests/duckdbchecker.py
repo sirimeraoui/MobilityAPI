@@ -16,3 +16,10 @@ con.load_extension(
 
 print(con.execute("SHOW TABLES").fetchall())
 print(con.execute("SELECT * FROM COLLECTIONS").fetchall())
+
+con.sql("""
+SELECT table_name, constraint_text
+FROM duckdb_constraints()
+WHERE constraint_type = 'FOREIGN KEY'
+ORDER BY table_name
+""").show()

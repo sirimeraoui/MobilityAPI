@@ -1,10 +1,14 @@
 
+import traceback
+
+from duckdb import cursor
+
 from db.schemas.collection import Collection
 from backends.base.moving_features import MovingFeaturesBackend
 import uuid
 import json
 import re
-
+import traceback
 from sqlalchemy import insert, func, text
 
 from db.schemas.collection import Collection
@@ -16,17 +20,21 @@ class MobilityDBMovingFeaturesBackend(MovingFeaturesBackend):
 
     def __init__(self, session):
         self.session = session
+        
+    async def begin(self):
+        if not self.session.in_transaction():
+            await self.session.begin()
 
     async def commit(self):
         await self.session.commit()
 
     async def rollback(self):
         await self.session.rollback()
+
     async def collection_exists(self, collection_id: str):
         collection = await self.session.get(
             Collection,
-            collection_id,
-        )
+            collection_id)
         return collection is not None
 
 
@@ -56,7 +64,6 @@ class MobilityDBMovingFeaturesBackend(MovingFeaturesBackend):
     
             if match:
                 srid = int(match.group(1))
-    
     
     # insert feauture
         result = await self.session.execute(
@@ -114,16 +121,15 @@ class MobilityDBMovingFeaturesBackend(MovingFeaturesBackend):
             # print("Created temporal geometry:",temporal_geometry_id,"for feature",repr(inserted_feature))
     
         return feat_id
+    
     async def get_items(self,collection_id: str,limit: int,bbox_coords=None,dt1=None,
         dt2=None,
         subTrajectory: bool = False,
     ):
         query = """
         WITH limited_features AS (
-            SELECT DISTINCT mf.id, mf.created_at
-            FROM moving_features mf
-            LEFT JOIN temporal_geometries tg
-                ON mf.id = tg.feature_id
+            SELECT DISTINCT mf.id, mf.created_at FROM moving_features mf
+            LEFT JOIN temporal_geometries tg ON mf.id = tg.feature_id
             WHERE mf.collection_id = :collection_id
         """
 
@@ -138,9 +144,7 @@ class MobilityDBMovingFeaturesBackend(MovingFeaturesBackend):
             bbox_stbox = f"STBOX X(({x1},{y1}),({x2},{y2}))"
 
             query += """
-                AND tg.trajectory &&
-                setsrid(CAST(:bbox_stbox AS stbox),srid(tg.trajectory))
-            """
+                AND tg.trajectory && setsrid(CAST(:bbox_stbox AS stbox),srid(tg.trajectory))"""
 
             params["bbox_stbox"] = bbox_stbox
 
@@ -149,20 +153,16 @@ class MobilityDBMovingFeaturesBackend(MovingFeaturesBackend):
         trajectory_expr = "asMFJSON(tg.trajectory)"
 
         if dt1 and dt2:
-            query += """
-                AND tg.trajectory && CAST(:period AS tstzspan)
-            """
+            query += """AND tg.trajectory && CAST(:period AS tstzspan)"""
             params["period"] = f"[{dt1}, {dt2}]"
 
         elif dt1:
-            query += """
-                AND tg.trajectory && CAST(:period AS tstzspan)
-            """
+            query += """AND tg.trajectory && CAST(:period AS tstzspan)"""
             params["period"] = f"[{dt1}, {dt1}]"
 
         # special case: clipped trajectory
         if subTrajectory and dt1 and dt2:
-            geometry_expr = "ST_AsGeoJSON(trajectory(atTime(tg.trajectory,CAST(:period AS tstzspan))))"
+            geometry_expr = """ST_AsGeoJSON(trajectory(atTime(tg.trajectory,CAST(:period AS tstzspan))))"""
 
             trajectory_expr = """asMFJSON(atTime(tg.trajectory,CAST(:period AS tstzspan)))"""
 
@@ -188,16 +188,52 @@ class MobilityDBMovingFeaturesBackend(MovingFeaturesBackend):
         return result.fetchall()
 # by feature id operations:
 
-    async def get(
+    async def get_feature(
         self,
         collection_id: str,
         mfeature_id: str,
     ):
-        pass
+        # Get feature with its temporal geometries
+        feature = await self.session.execute(
+            text("""SELECT mf.id, mf.type, mf.properties, mf.bbox::text,
+                mf.time::text, mf.crs, mf.trs,
+                json_agg(
+                    json_build_object(
+                        'id', tg.id,
+                        'type', tg.geometry_type,
+                        'trajectory', asMFJSON(tg.trajectory),
+                        'interpolation', tg.interpolation,
+                        'base', tg.base)
+                ) FILTER (WHERE tg.id IS NOT NULL) AS temporal_geometries,
+                json_agg(
+                    ST_AsGeoJSON(trajectory(tg.trajectory))::json
+                ) FILTER (WHERE tg.id IS NOT NULL) AS geometries
+
+            FROM moving_features mf
+            LEFT JOIN temporal_geometries tg
+                ON mf.id = tg.feature_id
+            WHERE mf.collection_id = :collection_id
+            AND mf.id = :mfeature_id
+            GROUP BY mf.id, mf.type, mf.properties, mf.bbox, mf.time,
+                mf.crs,
+                mf.trs
+            """),
+            {"collection_id": collection_id, "mfeature_id": mfeature_id},)
+        return feature.fetchone()
 
     async def delete(
         self,
         collection_id: str,
-        mfeature_id: str,
-    ):
-        pass
+        mfeature_id: str):
+        # Delete feature
+        result = await self.session.execute(
+            text("""DELETE FROM moving_features
+            WHERE id = :mfeature_id
+              AND collection_id = :collection_id
+            RETURNING id"""),
+            {
+            "mfeature_id": mfeature_id,
+            "collection_id": collection_id
+            },)
+        
+        return result.scalar_one_or_none()
