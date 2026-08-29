@@ -11,7 +11,7 @@ NC='\033[0m'
 WITH_TESTS=false
 DATA_ZIP_FILENAME="aisdk-2024-08-07.zip"   # Expected name of the zip file in data/
 MANUAL_DOWNLOAD_URL="http://aisdata.ais.dk/?prefix=2024/"
-CONFIG_FILE="config.json"
+ENV_FILE=".env"
 REQUIREMENTS_FILE="requirements.txt"
 TRAJECTORIES_FILE="data/trajectories_mf1.json"  
 show_help() {
@@ -54,47 +54,16 @@ free_port() {
     fi
 }
 
-# config.json if missing
-setup_config() {
-    if [ -f "$CONFIG_FILE" ]; then
-        echo -e "${GREEN}Found existing $CONFIG_FILE${NC}"
-    else
-        echo -e "${YELLOW}Creating $CONFIG_FILE...${NC}"
-        read -p "Enter DB_HOST [localhost]: " DB_HOST
-        DB_HOST=${DB_HOST:-localhost}
-        read -p "Enter DB_PORT [25431]: " DB_PORT
-        DB_PORT=${DB_PORT:-25431}
-        read -p "Enter DB_USER [postgres]: " DB_USER
-        DB_USER=${DB_USER:-postgres}
-        read -sp "Enter DB_PASS [mysecretpassword]: " DB_PASS
-        echo ""
-        DB_PASS=${DB_PASS:-mysecretpassword}
-        read -p "Enter DB_NAME [postgres]: " DB_NAME
-        DB_NAME=${DB_NAME:-postgres}
-        read -p "Enter API_PORT [8080]: " API_PORT
-        API_PORT=${API_PORT:-8080}
-
-        cat > "$CONFIG_FILE" <<EOF
-{
-    "DB_HOST": "$DB_HOST",
-    "DB_PORT": $DB_PORT,
-    "DB_USER": "$DB_USER",
-    "DB_PASS": "$DB_PASS",
-    "DB_NAME": "$DB_NAME",
-    "API_PORT": $API_PORT
-}
-EOF
-        echo -e "${GREEN}Config saved to $CONFIG_FILE${NC}"
-    fi
-}
-
-# Get API port from config.json
+# .env is missing
+# Get API port from .env or defult to 8080
 get_api_port() {
-    if [ -f "$CONFIG_FILE" ]; then
-        python3 -c "import json; print(json.load(open('$CONFIG_FILE')).get('API_PORT', 8080))" 2>/dev/null || echo "8080"
-    else
-        echo "8080"
+    local PORT
+
+    if [ -f "$ENV_FILE" ]; then
+        PORT=$(grep '^API_PORT=' "$ENV_FILE" | cut -d '=' -f2 | tr -d '"'\''[:space:]')
     fi
+
+    echo "${PORT:-8080}"
 }
 
 # virtual env
@@ -104,6 +73,7 @@ setup_venv() {
         python3 -m venv env
     fi
     source env/bin/activate
+    sleep 1
     if [ -f "$REQUIREMENTS_FILE" ]; then
         echo -e "${YELLOW}Installing requirements...${NC}"
         pip install -r "$REQUIREMENTS_FILE"
@@ -170,27 +140,37 @@ run_preprocessing() {
 # Run tests
 run_tests() {
     API_PORT=$(get_api_port)
-    free_port $API_PORT
+    free_port "$API_PORT"
 
     echo -e "${YELLOW}Starting server in background on port $API_PORT...${NC}"
 
-    fastapi dev &
+    fastapi dev --port "$API_PORT" &
     SERVER_PID=$!
 
     sleep 5
 
     echo -e "${YELLOW}Running integration tests...${NC}"
 
-    pytest -v -s tests/test_MobilityAPI.py 
-
+    set +e
+    pytest tests/test_MobilityAPI.py
     TEST_EXIT=$?
+    set -e
 
-    kill $SERVER_PID 2>/dev/null || true
+    # Stop the temporary background server used by tests
+    kill "$SERVER_PID" 2>/dev/null || true
+    wait "$SERVER_PID" 2>/dev/null || true
 
-    exit $TEST_EXIT
+    if [ "$TEST_EXIT" -ne 0 ]; then
+        echo -e "${RED}Tests failed.${NC}"
+        return "$TEST_EXIT"
+    fi
+
+    echo -e "${GREEN}Tests passed. Starting MobilityAPI normally...${NC}"
+
+  
+    exec fastapi dev --port "$API_PORT"
 }
-
-setup_config
+# setup_dotenv
 setup_venv
 start_container
 

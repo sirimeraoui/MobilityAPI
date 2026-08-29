@@ -8,7 +8,7 @@ from sqlalchemy import insert, func, text
 
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
-from zmq import backend
+
 
 
 from db.schemas.temporal_geometry import TemporalGeometry
