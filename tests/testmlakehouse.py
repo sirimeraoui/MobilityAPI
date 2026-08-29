@@ -8,7 +8,7 @@ con = duckdb.connect(
 )
 
 # MobilityDuck
-con.load_extension("../extensions/mobilityduck.duckdb_extension")
+con.load_extension("./extensions/mobilityduck.duckdb_extension")
 
 # Iceberg
 con.execute("INSTALL iceberg")
@@ -23,8 +23,8 @@ print("MobilityDuck + Iceberg loaded")
 con.execute("""
     CREATE OR REPLACE SECRET polaris_secret (
         TYPE iceberg,
-        CLIENT_ID '56311c8f2cadf8d6',
-        CLIENT_SECRET '0f5389d15c39872f9ce819476592acca',
+        CLIENT_ID '4ef64c324a3e8877',
+        CLIENT_SECRET 'fd6d847d6efdb6efe4ae23c6b1d3ea9e',
         OAUTH2_SERVER_URI 'http://localhost:8181/api/catalog/v1/oauth/tokens',
         OAUTH2_GRANT_TYPE 'client_credentials',
         OAUTH2_SCOPE 'PRINCIPAL_ROLE:ALL'

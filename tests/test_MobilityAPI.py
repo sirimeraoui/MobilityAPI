@@ -1036,7 +1036,7 @@ def test_delete_temporal_property(setup_property_test_data):
     ####subtemporal is missing 
 # ============================================== TEST delete all collection==============================================
 def test_delete_all_created_collections(create_collections):
-    created_collections = ["boats"]
+    created_collections = ["boats", "planes"]
     for col_id in created_collections:
         resp = requests.delete(f"{HOST}/collections/{col_id}")
         print(f"Deleting collection {col_id} ====> status: {resp.status_code}")

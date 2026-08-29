@@ -1,12 +1,12 @@
 import duckdb
 
-PARQUET_FILE = "./ships.parquet"
+PARQUET_FILE = "./tests/ships.parquet"
 
 con = duckdb.connect(
     config={"allow_unsigned_extensions": "true"}
 )
 
-con.load_extension("../extensions/mobilityduck.duckdb_extension")
+con.load_extension("./extensions/mobilityduck.duckdb_extension")
 
 
 # 1. Can DuckDB read the Parquet?

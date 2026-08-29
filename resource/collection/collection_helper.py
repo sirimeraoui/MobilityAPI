@@ -30,7 +30,7 @@ def build_collection_response(collection, base_url):
  
         "links": [
             {
-                "href": f"{base_url}/collections/{collection['id']}",
+                "href": f"{base_url}/api/v1/collections/{collection['id']}",
                 "rel": "self",
                 "type": "application/json"
             },

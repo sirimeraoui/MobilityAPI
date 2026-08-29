@@ -7,9 +7,7 @@ import duckdb
 COLLECTION_TABLE = "lakehouse.mobility.collection_ships"
 
 
-# ============================================================
 # CONNECT TO DUCKDB
-# ============================================================
 
 con = duckdb.connect(
     config={"allow_unsigned_extensions": "true"}
@@ -23,15 +21,15 @@ con.execute("LOAD iceberg")
 print("Iceberg and MobilityDuck extensions loaded")
 
 
-# ============================================================
+
 # CONNECT TO POLARIS
-# ============================================================
+
 
 con.execute("""
     CREATE OR REPLACE SECRET polaris_secret (
         TYPE iceberg,
-        CLIENT_ID '9f4cc3609fdcf296',
-        CLIENT_SECRET 'a482121328018941b2cce50f3a11c2ef',
+        CLIENT_ID '4ef64c324a3e8877',
+        CLIENT_SECRET 'fd6d847d6efdb6efe4ae23c6b1d3ea9e',
         OAUTH2_SERVER_URI
             'http://localhost:8181/api/catalog/v1/oauth/tokens'
     )
@@ -48,9 +46,9 @@ con.execute("""
 print("Polaris catalog attached")
 
 
-# ============================================================
-# TEST 1 — CHECK NUMBER OF TRAJECTORIES
-# ============================================================
+
+# TEST 1 :CHECK NUMBER OF TRAJECTORIES
+
 
 print("\n=== TEST 1: ICEBERG TABLE ROW COUNT ===")
 
@@ -62,9 +60,9 @@ result = con.execute(f"""
 print("Total trajectories:", result[0])
 
 
-# ============================================================
-# TEST 2 — CHECK COVERING COLUMNS
-# ============================================================
+
+# TEST 2: CHECK COVERING COLUMNS
+
 
 print("\n=== TEST 2: COVERING COLUMNS ===")
 
@@ -86,9 +84,8 @@ for row in result:
     print(row)
 
 
-# ============================================================
-# TEST 3 — RECONSTRUCT A TRAJECTORY
-# ============================================================
+# TEST 3:RECONSTRUCT A TRAJECTORY
+
 
 print("\n=== TEST 3: TRAJECTORY RECONSTRUCTION ===")
 
@@ -106,9 +103,8 @@ for row in result:
     print(row)
 
 
-# ============================================================
-# TEST 4 — SPATIOTEMPORAL FILTER
-# ============================================================
+# TEST 4 :SPATIOTEMPORAL FILTER
+
 
 print("\n=== TEST 4: SPATIOTEMPORAL FILTER ===")
 
@@ -136,9 +132,9 @@ for row in result:
     print(row)
 
 
-# ============================================================
-# TEST 5 — RECONSTRUCT FILTERED TRAJECTORIES
-# ============================================================
+
+# TEST 5: RECONSTRUCT FILTERED TRAJECTORIES
+
 
 print("\n=== TEST 5: FILTERED TRAJECTORY RECONSTRUCTION ===")
 
@@ -163,9 +159,9 @@ for row in result[:3]:
     print(row)
 
 
-# ============================================================
-# TEST 6 — CHECK ICEBERG QUERY PLAN
-# ============================================================
+
+# TEST 6 ;CHECK ICEBERG QUERY PLAN
+
 
 print("\n=== TEST 6: ICEBERG QUERY PLAN ===")
 
@@ -189,9 +185,9 @@ for row in result:
     print(row)
 
 
-# ============================================================
-# TEST 7 — CHECK ICEBERG TABLE SCHEMA
-# ============================================================
+
+# TEST 7:CHECK ICEBERG TABLE SCHEMA
+
 
 print("\n=== TEST 7: ICEBERG TABLE SCHEMA ===")
 
@@ -203,9 +199,6 @@ for row in result:
     print(row)
 
 
-# ============================================================
-# DONE
-# ============================================================
 
 print("\n=== ALL API → ICEBERG TESTS COMPLETED ===")
 

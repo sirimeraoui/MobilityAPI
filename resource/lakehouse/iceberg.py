@@ -35,8 +35,8 @@ def parquet_to_iceberg(
         con.execute("""
             CREATE OR REPLACE SECRET polaris_secret (
                 TYPE iceberg,
-                CLIENT_ID '56311c8f2cadf8d6',
-                CLIENT_SECRET '0f5389d15c39872f9ce819476592acca',
+                CLIENT_ID '4ef64c324a3e8877',
+                CLIENT_SECRET 'fd6d847d6efdb6efe4ae23c6b1d3ea9e',
                 OAUTH2_SERVER_URI 'http://localhost:8181/api/catalog/v1/oauth/tokens',
                 OAUTH2_GRANT_TYPE 'client_credentials',
                 OAUTH2_SCOPE 'PRINCIPAL_ROLE:ALL'
@@ -62,9 +62,9 @@ def parquet_to_iceberg(
             CREATE SCHEMA IF NOT EXISTS lakehouse.mobility
         """)
 
-        # -----------------------------------------------------
-        # 6. Create Iceberg table from API-generated Parquet
-        # -----------------------------------------------------
+   
+        # 6 Create Iceberg table from API-generated Parquet
+
 
         table_name = f"lakehouse.mobility.collection_{collection_id}"
 
