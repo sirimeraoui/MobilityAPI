@@ -157,7 +157,7 @@ class MobilityDuckMovingFeaturesBackend(MovingFeaturesBackend):
             bbox_stbox = f"SRID={srid};STBOX X(({x1},{y1}),({x2},{y2}))"
 
             query += """
-                AND tg.trajectory && CAST(? AS stbox)
+                AND tg.trajectory && stbox(?)
             """
             params.append(bbox_stbox)
 
